@@ -3,7 +3,11 @@ package es.marta.tfg.carescan.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.UserRepository;
 
@@ -45,7 +49,7 @@ public class GeneralController {
         newUser.setName(name);
         newUser.setEmail(email);
         newUser.setPassword(new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(password));
-        newUser.setRoles(java.util.List.of("USER"));
+        newUser.setRole(Role.USER);
 
         userRepository.save(newUser);
 
@@ -57,6 +61,11 @@ public class GeneralController {
     @GetMapping("/userHome")
     public String userHome() {
         return "userHome";
+    }
+
+    @GetMapping("/adminHome")
+    public String adminHome() {
+        return "adminHome";
     }
 
 }

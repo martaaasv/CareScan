@@ -8,17 +8,6 @@
             "mainClass": "es.marta.tfg.carescan.CareScan",
             "projectName": "CareScan",
             "args": "",
-            "envFile": "${workspaceFolder}/.env",
-            "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=62790 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=CareScan"
-        },
-        {
-            "type": "java",
-            "name": "Spring Boot-CareScan<TFG_7069345>",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "mainClass": "main.java.es.marta.tfg.carescan.CareScan",
-            "projectName": "TFG_7069345",
-            "args": "",
             "envFile": "${workspaceFolder}/.env"
         }
     ]

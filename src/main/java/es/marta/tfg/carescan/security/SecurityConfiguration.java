@@ -15,6 +15,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
 import es.marta.tfg.carescan.security.jwt.JwtRequestFilter;
 import es.marta.tfg.carescan.security.jwt.UnauthorizedHandlerJwt;
 import jakarta.servlet.http.HttpServletResponse;
@@ -56,21 +57,21 @@ public class SecurityConfiguration {
     @Order(1)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher("/api/**")
-            .exceptionHandling(handling -> handling
+                .securityMatcher("/api/**")
+                .exceptionHandling(handling -> handling
                 .authenticationEntryPoint(unauthorizedHandlerJwt)
                 .accessDeniedHandler((request, response, ex) -> {
                     response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
                 })
-            )
-            .authorizeHttpRequests(auth -> auth
+                )
+                .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/users/login", "/api/users/register", "/api/users/logout").permitAll()
                 .anyRequest().authenticated()
-            )
-            .csrf(csrf -> csrf.disable())
-            .httpBasic(httpBasic -> httpBasic.disable())
-            .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                )
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -78,31 +79,34 @@ public class SecurityConfiguration {
     // FORMULARIOS WEB
     @Bean
     @Order(2)
-    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain webFilterChain(HttpSecurity http, CustomLogin successHandler) throws Exception {
 
         http.authenticationProvider(authenticationProvider());
 
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/login", "/signUp", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN") // 🔒 protege rutas admin
+                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN") // 🔒 protege rutas de usuario
                 .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
+                )
+                .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .usernameParameter("email")   // 👈 ESTA LÍNEA ES CLAVE
+                .usernameParameter("email")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/userHome", true)
+                .successHandler(successHandler) 
                 .failureUrl("/login?error=true")
                 .permitAll()
-            )
-            .logout(logout -> logout
+                )
+                .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
                 .permitAll()
-            );
+                );
 
         return http.build();
     }
+
 }

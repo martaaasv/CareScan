@@ -1,15 +1,13 @@
 package es.marta.tfg.carescan.model;
 
-
-import java.util.List;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 
 @Entity
 @Table(name = "users")
@@ -21,15 +19,14 @@ public class User {
 
     private String name;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
-    private String password; 
+    private String password;
 
-    private List<String> roles;
-
-    //////////////CONSRTUCTORS///////////////
-
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
 
     public User() {
     }
@@ -39,8 +36,14 @@ public class User {
         this.password = password;
         this.email = email;
     }
+    public User(String name, String password, String email, Role role) {
+        this.name = name;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
 
-    ///////////GET AND SET/////////////
+    // ===== GETTERS Y SETTERS =====
     public Long getId() {
         return id;
     }
@@ -57,14 +60,12 @@ public class User {
         this.name = name;
     }
 
-   
-
-    public List<String> getRoles() {
-        return roles;
+    public String getEmail() {
+        return email;
     }
 
-    public void setRoles(List<String> roles) {
-        this.roles = roles;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -75,10 +76,11 @@ public class User {
         this.password = password;
     }
 
-    public String getEmail() {
-        return email;
+    public Role getRole() {
+        return role;
     }
-    public void setEmail(String email) {
-        this.email = email;
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }
