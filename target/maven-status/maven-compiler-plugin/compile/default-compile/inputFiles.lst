@@ -1,3 +1,15 @@
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\RepositoryUserDetailsService.java
 C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\SampleData.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\service\userService.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\JwtRequestFilter.java
 C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\CareScan.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\UnauthorizedHandlerJwt.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\User.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\CSRFHandlerConfiguration.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\JwtTokenProvider.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\repository\UserRepository.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\LoginRequest.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\TokenType.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\UserLoginService.java
 C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\GeneralController.java
+C:\Users\marta\Documents\DOBLE GRADO\4º carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\AuthResponse.java

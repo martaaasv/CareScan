@@ -1,2 +1,15 @@
-es\marta\tfg\carescan\CareScan.class
+es\marta\tfg\carescan\security\jwt\JwtTokenProvider.class
+es\marta\tfg\carescan\security\jwt\AuthResponse$Status.class
+es\marta\tfg\carescan\security\CSRFHandlerConfiguration.class
+es\marta\tfg\carescan\model\User.class
+es\marta\tfg\carescan\service\userService.class
+es\marta\tfg\carescan\security\CSRFHandlerInterceptor.class
+es\marta\tfg\carescan\security\jwt\JwtRequestFilter.class
+es\marta\tfg\carescan\security\jwt\TokenType.class
+es\marta\tfg\carescan\repository\UserRepository.class
+es\marta\tfg\carescan\security\jwt\UnauthorizedHandlerJwt.class
 es\marta\tfg\carescan\controller\GeneralController.class
+es\marta\tfg\carescan\CareScan.class
+es\marta\tfg\carescan\security\jwt\LoginRequest.class
+es\marta\tfg\carescan\security\jwt\AuthResponse.class
+es\marta\tfg\carescan\security\jwt\UserLoginService.class

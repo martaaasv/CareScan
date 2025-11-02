@@ -1,106 +1,107 @@
-/* Estilos para el header */
-.toolbar {
+header {
+    background-color: #3ab063;
+    color: white;
+    padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.logo img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.logo h1 {
-    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size: 1.8rem;
     font-weight: bold;
+    color: #ffffff;
 }
 
-.navigation ul {
+nav ul {
     display: flex;
     list-style: none;
     margin: 0;
     padding: 0;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
-.navigation a {
+nav a {
     color: white;
     text-decoration: none;
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    transition: color 0.3s;
 }
 
-.navigation a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+nav a:hover {
+    color: #3ab063;
 }
 
-.user-actions {
-    display: flex;
-    gap: 1rem;
+/* Estilos del contenido principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
 }
 
-.btn-profile, .btn-logout {
-    padding: 0.5rem 1rem;
-    border: 2px solid white;
-    border-radius: 5px;
+/* Estilos de los botones */
+.btn {
+    display: block;
+    /* Esto hace que cada botón ocupe todo el ancho disponible */
+    width: 200px;
+    /* Ancho fijo para todos los botones */
+    padding: 12px 20px;
+    /* Espaciado interno para que el texto esté rodeado */
+    margin: 10px auto;
+    /* Centrado y espacio entre botones */
+    text-align: center;
     text-decoration: none;
-    color: white;
-    font-weight: 500;
+    color: #2c3e50;
+    font-weight: bold;
+    border: line 2px solid #ffffff;
+    background-color: #ffffff;
+    border-radius: 4px;
+    /* Bordes ligeramente redondeados (opcional) */
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
-.btn-profile {
-    background-color: transparent;
+.hero {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: #ecf7f0;
+    border-radius: 8px;
+    margin-bottom: 2rem;
 }
 
-.btn-profile:hover {
-    background-color: white;
-    color: #667eea;
+.hero h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
 }
 
-.btn-logout {
-    background-color: #ff4757;
-    border-color: #ff4757;
+.hero p {
+    font-size: 1.2rem;
+    color: #7f8c8d;
 }
 
-.btn-logout:hover {
-    background-color: #ff6b81;
-    border-color: #ff6b81;
+
+/* Estilos de formulario inicio sesion */
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: #2c3e50;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .toolbar {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-    }
-    
-    .navigation ul {
-        gap: 1rem;
-    }
-    
-    .user-actions {
-        flex-direction: column;
-        width: 100%;
-    }
-    
-    .btn-profile, .btn-logout {
-        text-align: center;
-    }
+footer {
+    text-align: center;
+    padding: 1.5rem;
+    background-color: #c9e8d4;
+    color: rgb(0, 0, 0);
+    margin-top: 2rem;
 }
