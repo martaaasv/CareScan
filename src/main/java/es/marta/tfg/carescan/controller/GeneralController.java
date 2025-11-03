@@ -1,6 +1,7 @@
 package es.marta.tfg.carescan.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +18,17 @@ public class GeneralController {
     @Autowired
     private UserRepository userRepository;
 
-    @GetMapping("/")
+    /*@GetMapping("/")
     public String homeTest() {
         return "home";
+    }*/
+    @GetMapping("/")
+    public String home(Authentication authentication, Model model) {
+        if (authentication != null) {
+            model.addAttribute("username", authentication.getName());
+            model.addAttribute("roles", authentication.getAuthorities());
+        }
+        return "home"; // Renderiza templates/home.html
     }
 
     @GetMapping("/login")
@@ -58,7 +67,7 @@ public class GeneralController {
         return "redirect:/login";
     }
 
-    @GetMapping("/userHome")
+    /*@GetMapping("/userHome")
     public String userHome() {
         return "userHome";
     }
@@ -66,6 +75,5 @@ public class GeneralController {
     @GetMapping("/adminHome")
     public String adminHome() {
         return "adminHome";
-    }
-
+    }*/
 }

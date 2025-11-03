@@ -1,34 +1,63 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CareScan - Inicio</title>
-    <link rel="stylesheet" href="/css/styles.css">
 
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+    
 </head>
+
 <body>
-    <header>
-        <div class="logo">CareScan</div>
-        <nav>
-            <ul>
-                <li><a href="/demo">Ver demostración</a></li>
-                <li><a href="/saberMas">Saber más</a></li>
-            </ul>
-        </nav>
-    </header>
+<header>
+    <h1>CareScan</h1>
+    <nav>
+        <a th:href="@{/}">Inicio</a>
+        <a th:href="@{/demo}">Ver demostración</a>
+        <a th:href="@{/about}">Saber más</a>
 
-    <main class="container">
-        <section class="hero">
-            <h2>Bienvenido a CareScan</h2>
-            <p>(Breve descripción)</p>
-            <a href="/login" class="btn"> Iniciar sesión</a>
-            <a href="/signUp" class="btn"> Registrarse</a>
-        </section>
-    </main>
+        <span sec:authorize="isAuthenticated()">
+            <a th:href="@{/logout}">Cerrar sesión</a>
+        </span>
 
-    <footer>
-        <p>&copy; 2024 CareScan - TFG Marta</p>
-    </footer>
+    </nav>
+</header>
+
+<main>
+    <div class="container">
+
+        <h2>Bienvenido a CareScan</h2>
+        <p>Escanea, analiza y gestiona resultados médicos fácilmente.</p>
+
+        <div sec:authorize="isAnonymous()">
+            <p>Inicia sesión o crea tu cuenta para comenzar a usar la plataforma.</p>
+            <a th:href="@{/login}"><button>Iniciar sesión</button></a>
+            <a th:href="@{/register}"><button>Registrarse</button></a>
+        </div>
+
+        <div sec:authorize="hasRole('USER')">
+            <h3>Zona de usuario</h3>
+            <p>Hola, <strong><span sec:authentication="name"></span></strong> 👋</p>
+            <p>Puedes acceder a tus análisis y gestionar tus resultados.</p>
+            <a th:href="@{/user/dashboard}"><button>Ir a mi panel</button></a>
+        </div>
+
+        <div sec:authorize="hasRole('ADMIN')">
+            <h3>Panel de administración</h3>
+            <p>Hola, <strong><span sec:authentication="name"></span></strong> 👋</p>
+            <p>Aquí puedes gestionar usuarios, ver estadísticas y administrar el sistema.</p>
+            <a th:href="@{/admin/dashboard}"><button>Ir al panel de administrador</button></a>
+        </div>
+
+    </div>
+</main>
+
+<footer>
+    <p>&copy; 2026 CareScan - TFG Marta</p>
+</footer>
 </body>
 </html>

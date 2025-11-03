@@ -86,9 +86,9 @@ public class SecurityConfiguration {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/signUp", "/error", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN") // 🔒 protege rutas admin
-                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN") // 🔒 protege rutas de usuario
+                .requestMatchers("/", "/home", "/login", "/signUp", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN") 
+                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN") 
                 .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
