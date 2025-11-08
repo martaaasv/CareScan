@@ -67,13 +67,5 @@ public class GeneralController {
         return "redirect:/login";
     }
 
-    /*@GetMapping("/userHome")
-    public String userHome() {
-        return "userHome";
-    }
-
-    @GetMapping("/adminHome")
-    public String adminHome() {
-        return "adminHome";
-    }*/
+    
 }
