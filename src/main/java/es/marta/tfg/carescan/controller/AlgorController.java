@@ -1,33 +1,165 @@
 package es.marta.tfg.carescan.controller;
 
-
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
 
 @Controller
 @RequestMapping("/upload")
 public class AlgorController {
 
-    @RequestMapping
-    public String show() {
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ConsultaRepository consultaRepository;
+
+
+    @GetMapping("/{id}")
+    public String showUserUpload(@PathVariable Long id, Model model) {
+        model.addAttribute("userId", id);
         return "upload";
     }
 
-    @PostMapping("/image")
-    public String uploadImage(MultipartFile file, Model model) {
-        if (file != null && !file.isEmpty()) {
+    @GetMapping("/{id}/upload")
+    public String redirectUploadGet(@PathVariable Long id) {
+        return "redirect:/upload/" + id;
+    }
 
-            int randomNumber = new Random().nextInt(1000); // entre 0 y 999
-            model.addAttribute("randomNumber", randomNumber);
-            model.addAttribute("fileName", file.getOriginalFilename());
-        } else {
-            model.addAttribute("error", "No se ha seleccionado ninguna imagen");
+    @PostMapping("/{id}/upload")
+    public String uploadImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) throws IOException {
+
+ 
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+        if (file == null || file.isEmpty()) {
+            return "redirect:/upload/" + id + "/my-images?error=empty";
+        }
+
+        String email = authentication.getName();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        User usuarioAutenticado = optionalUser.get();
+        if (!usuarioAutenticado.getId().equals(id)) {
+            return "error/403";
+        }
+
+ 
+        String originalName = file.getOriginalFilename();
+        String safeName = (originalName == null) ? "archivo" : Paths.get(originalName).getFileName().toString();
+
+        Path uploadPath = Paths.get("uploads", String.valueOf(id));
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        Path filePath = uploadPath.resolve(safeName);
+        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+  
+        Consulta imagen = new Consulta();
+        imagen.setNombreArchivo(safeName);
+        imagen.setRuta("/uploads/" + id + "/" + safeName);
+        imagen.setUser(usuarioAutenticado);
+        consultaRepository.save(imagen);
+
+    
+        int randomNumber = new Random().nextInt(100);
+        redirectAttributes.addFlashAttribute("fileName", safeName);
+        redirectAttributes.addFlashAttribute("randomNumber", randomNumber);
+        redirectAttributes.addFlashAttribute("userId", id);
+
+        return "redirect:/upload/" + id + "/results";
+    }
+
+   
+    @GetMapping("/{id}/results")
+    public String showResults(@PathVariable Long id, Model model) {
+        if (!model.containsAttribute("userId")) {
+         
+            return "redirect:/upload/" + id;
         }
         return "results";
+    }
+
+    @GetMapping("/{id}/my-images")
+    public String listMyImages(
+            @PathVariable Long id,
+            Model model,
+            Authentication authentication) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        String email = authentication.getName();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        User user = optionalUser.get();
+        if (!user.getId().equals(id)) {
+            return "error/403";
+        }
+
+        List<Consulta> misConsultas = consultaRepository.findByUser(user);
+        model.addAttribute("imagenes", misConsultas);
+        model.addAttribute("userId", id);
+
+        return "my-images";
+    }
+
+    @GetMapping("/my-images")
+    public String redirectToUserImages(Authentication authentication) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+        Long id = optionalUser.get().getId();
+        return "redirect:/upload/" + id + "/my-images";
+    }
+
+    @GetMapping
+    public String uploadRoot(Authentication auth) {
+        if (auth != null) {
+            Optional<User> opt = userRepository.findByEmail(auth.getName());
+            if (opt.isPresent()) {
+                return "redirect:/upload/" + opt.get().getId();
+            }
+        }
+        return "redirect:/";
     }
 }

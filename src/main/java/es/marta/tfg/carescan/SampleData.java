@@ -19,6 +19,14 @@ public class SampleData {
     public void init() throws java.io.IOException {
         try {
             if (userRepository.count() == 0) {
+                
+                User admin = new User();
+                admin.setName("Admin");
+                admin.setEmail("admin@carescan.com");
+                admin.setPassword(new BCryptPasswordEncoder().encode("admin123"));
+                admin.setRole(Role.ADMIN);
+                userRepository.save(admin);
+
                 User user1 = new User();
                 user1.setName("User");
                 user1.setEmail("user@gmail.com");
@@ -26,12 +34,6 @@ public class SampleData {
                 user1.setRole(Role.USER);
                 userRepository.save(user1);
 
-                User admin = new User();
-                admin.setName("Admin");
-                admin.setEmail("admin@carescan.com");
-                admin.setPassword(new BCryptPasswordEncoder().encode("admin123"));
-                admin.setRole(Role.ADMIN);
-                userRepository.save(admin);
 
             }
 

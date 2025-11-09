@@ -28,11 +28,13 @@
             <p th:if="${error}" th:text="${error}"></p>
 
             <div th:unless="${error}">
-                <p>Imagen subida: <strong th:text="${fileName}"></strong></p>
-                <p>Número aleatorio generado: <strong th:text="${randomNumber}"></strong></p>
+                <p>Imagen subida: <span th:text="${fileName}">—</span></p>
+                <p>Número aleatorio generado: <span th:text="${randomNumber}">—</span></p>
+
             </div>
 
-            <a th:href="@{/upload}" class="btn">Volver</a>
+            <a th:href="@{'/upload/' + ${userId}}" class="btn">Volver</a>
+
         </div>
     </main>
 
