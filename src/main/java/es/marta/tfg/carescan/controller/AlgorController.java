@@ -36,7 +36,6 @@ public class AlgorController {
     @Autowired
     private ConsultaRepository consultaRepository;
 
-
     @GetMapping("/{id}")
     public String showUserUpload(@PathVariable Long id, Model model) {
         model.addAttribute("userId", id);
@@ -55,12 +54,11 @@ public class AlgorController {
             Authentication authentication,
             RedirectAttributes redirectAttributes) throws IOException {
 
- 
         if (authentication == null) {
             return "redirect:/login";
         }
         if (file == null || file.isEmpty()) {
-            return "redirect:/upload/" + id + "/my-images?error=empty";
+            return "redirect:/upload/" + id + "/history?error=empty";
         }
 
         String email = authentication.getName();
@@ -74,7 +72,6 @@ public class AlgorController {
             return "error/403";
         }
 
- 
         String originalName = file.getOriginalFilename();
         String safeName = (originalName == null) ? "archivo" : Paths.get(originalName).getFileName().toString();
 
@@ -85,15 +82,15 @@ public class AlgorController {
         Path filePath = uploadPath.resolve(safeName);
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-  
+        int randomNumber = new Random().nextInt(100);
+
         Consulta imagen = new Consulta();
         imagen.setNombreArchivo(safeName);
         imagen.setRuta("/uploads/" + id + "/" + safeName);
+        imagen.setResultado(randomNumber);
         imagen.setUser(usuarioAutenticado);
         consultaRepository.save(imagen);
 
-    
-        int randomNumber = new Random().nextInt(100);
         redirectAttributes.addFlashAttribute("fileName", safeName);
         redirectAttributes.addFlashAttribute("randomNumber", randomNumber);
         redirectAttributes.addFlashAttribute("userId", id);
@@ -101,28 +98,21 @@ public class AlgorController {
         return "redirect:/upload/" + id + "/results";
     }
 
-   
     @GetMapping("/{id}/results")
     public String showResults(@PathVariable Long id, Model model) {
         if (!model.containsAttribute("userId")) {
-         
             return "redirect:/upload/" + id;
         }
         return "results";
     }
 
-    @GetMapping("/{id}/my-images")
-    public String listMyImages(
-            @PathVariable Long id,
-            Model model,
-            Authentication authentication) {
-
+    @GetMapping("/{id}/history")
+    public String history(@PathVariable Long id, Model model, Authentication authentication) {
         if (authentication == null) {
             return "redirect:/login";
         }
 
-        String email = authentication.getName();
-        Optional<User> optionalUser = userRepository.findByEmail(email);
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
         if (optionalUser.isEmpty()) {
             return "redirect:/login";
         }
@@ -132,11 +122,15 @@ public class AlgorController {
             return "error/403";
         }
 
-        List<Consulta> misConsultas = consultaRepository.findByUser(user);
-        model.addAttribute("imagenes", misConsultas);
+        List<Consulta> consultas = consultaRepository.findByUserOrderByIdDesc(user);
         model.addAttribute("userId", id);
+        model.addAttribute("consultas", consultas);
+        return "history";
+    }
 
-        return "my-images";
+    @GetMapping("/{id}/my-images")
+    public String legacyMyImagesRedirect(@PathVariable Long id) {
+        return "redirect:/upload/" + id + "/history";
     }
 
     @GetMapping("/my-images")
@@ -149,7 +143,7 @@ public class AlgorController {
             return "redirect:/login";
         }
         Long id = optionalUser.get().getId();
-        return "redirect:/upload/" + id + "/my-images";
+        return "redirect:/upload/" + id + "/history";
     }
 
     @GetMapping

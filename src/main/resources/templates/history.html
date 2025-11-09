@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis consultas</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+
+<body>
+    <header>
+        <h1 class="logo">CareScan</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/}">Inicio</a></li>
+                <li sec:authorize="isAnonymous()"><a th:href="@{/upload}">Ver demostración</a></li>
+                <li sec:authorize="isAnonymous()"><a th:href="@{/about}">Saber más</a></li>
+                <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Cerrar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main2>
+        <div class="container history-page">
+            <h2 class="page-title">Mis consultas</h2>
+
+            <div th:if="${#lists.isEmpty(consultas)}" class="empty-state">
+                <p>No hay consultas todavía.</p>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(consultas)}" class="styled-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Archivo</th>
+                        <th>Resultado</th>
+                        <th>Imagen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${consultas}">
+                        <td th:text="${c.id}">--</td>
+                        <td th:text="${c.nombreArchivo}">--</td>
+                        <td th:text="${c.resultado}">--</td>
+                        <td><a th:href="${c.ruta}" target="_blank" rel="noopener">Abrir</a></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="actions-bottom">
+                <a th:href="@{'/upload/' + ${userId}}">
+                    <button>Subir nueva imagen</button>
+                </a>
+            </div>
+        </div>
+    </main2>
+
+
+    <footer>
+        <p>&copy; 2026 CareScan - TFG Marta</p>
+    </footer>
+</body>
+
+</html>

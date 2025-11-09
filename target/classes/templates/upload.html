@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-<html lang="es"
-      xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="UTF-8">
@@ -11,41 +9,42 @@
 </head>
 
 <body>
-<header>
-    <h1 class="logo">CareScan</h1>
-    <nav>
-        <ul>
-            <li><a th:href="@{/}">Inicio</a></li>
-            <li sec:authorize="isAnonymous()"><a th:href="@{/upload}">Ver demostración</a></li>
-            <li sec:authorize="isAnonymous()"><a th:href="@{/about}">Saber más</a></li>
-            <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Cerrar sesión</a></li>
-        </ul>
-    </nav>
-</header>
+    <header>
+        <h1 class="logo">CareScan</h1>
+        <nav>
+            <ul>
+                <li><a th:href="@{/}">Inicio</a></li>
+                <li sec:authorize="isAnonymous()"><a th:href="@{/upload}">Ver demostración</a></li>
+                <li sec:authorize="isAnonymous()"><a th:href="@{/about}">Saber más</a></li>
+                <li sec:authorize="isAuthenticated()"><a th:href="@{/logout}">Cerrar sesión</a></li>
+            </ul>
+        </nav>
+    </header>
 
-<main>
-    <div class="container">
-        <h2>Subir una imagen</h2>
-        <p>Selecciona una imagen desde tu dispositivo para realizar la demostración.</p>
+    <main>
+        <div class="container">
+            <h2>Subir una imagen</h2>
+            <p>Selecciona una imagen desde tu dispositivo para realizar la demostración.</p>
 
-   
-        <form th:action="@{'/upload/' + ${userId} + '/upload'}" method="post" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/*" required>
-            <br>
-            <button type="submit">Subir</button>
-        </form>
 
-      
-        <div style="margin-top: 20px;">
-            <a th:href="@{'/upload/' + ${userId} + '/my-images'}">
-                <button type="button">Ver mis imágenes</button>
-            </a>
+            <form th:action="@{'/upload/' + ${userId} + '/upload'}" method="post" enctype="multipart/form-data">
+                <input type="file" name="file" accept="image/*" required>
+                <br>
+                <button type="submit">Subir</button>
+            </form>
+
+
+            <!--<div style="margin-top: 20px;">
+                <a th:href="@{'/upload/' + ${userId} + '/history'}">
+                    <button type="button">Ver mis consultas</button>
+                </a>
+            </div>-->
         </div>
-    </div>
-</main>
+    </main>
 
-<footer>
-    <p>&copy; 2026 CareScan - TFG Marta</p>
-</footer>
+    <footer>
+        <p>&copy; 2026 CareScan - TFG Marta</p>
+    </footer>
 </body>
+
 </html>

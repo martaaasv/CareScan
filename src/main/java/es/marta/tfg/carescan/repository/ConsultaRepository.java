@@ -1,3 +1,4 @@
+
 package es.marta.tfg.carescan.repository;
 import java.util.List;
 
@@ -8,6 +9,6 @@ import es.marta.tfg.carescan.model.User;
 
 public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
-    List<Consulta> findByUser(User user);
+    List<Consulta> findByUserOrderByIdDesc(User user);
 
 }
