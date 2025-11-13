@@ -43,7 +43,7 @@ public class User {
         this.role = role;
     }
 
-    // ===== GETTERS Y SETTERS =====
+    
     public Long getId() {
         return id;
     }

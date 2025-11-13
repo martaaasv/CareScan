@@ -2,9 +2,11 @@ package es.marta.tfg.carescan.DTO;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class signUp {
+
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
 
@@ -14,9 +16,12 @@ public class signUp {
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
+    @Pattern(
+        regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
+        message = "La contraseña debe contener letras y números"
+    )
     private String password;
 
-    // Getters y Setters
     public String getName() {
         return name;
     }   
@@ -32,5 +37,7 @@ public class signUp {
     public String getPassword() {
         return password;
     }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
- 
