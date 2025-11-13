@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,12 +13,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import es.marta.tfg.carescan.DTO.signUp;
 import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 @Controller
@@ -28,7 +31,6 @@ public class GeneralController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
 
     @GetMapping("/")
     public String home(Authentication authentication, Model model) {
@@ -82,12 +84,15 @@ public class GeneralController {
     }
 
     @GetMapping("/{id}/home")
-    public String userHome(@PathVariable Long id, Authentication authentication, Model model) {
+    public String userHome(@PathVariable Long id,
+            Authentication authentication,
+            Model model) {
         if (authentication == null) {
             return "redirect:/login";
         }
 
-        Optional<User> currentUser = userRepository.findByEmail(authentication.getName());
+        Optional<User> currentUser
+                = userRepository.findByEmail(authentication.getName());
         if (currentUser.isEmpty() || !currentUser.get().getId().equals(id)) {
             return "redirect:/access-denied";
         }
@@ -97,5 +102,100 @@ public class GeneralController {
         model.addAttribute("userId", id);
 
         return "home";
+    }
+
+    @GetMapping("/{id}/settings")
+    public String userSettings(@PathVariable Long id,
+            Authentication authentication,
+            Model model) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUser
+                = userRepository.findByEmail(authentication.getName());
+        if (currentUser.isEmpty() || !currentUser.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        model.addAttribute("username", currentUser.get().getName());
+        model.addAttribute("userId", id);
+        return "settings";
+    }
+
+    @PostMapping("/{id}/change-password")
+    public String changePassword(@PathVariable Long id,
+            Authentication authentication,
+            @RequestParam("currentPassword") String currentPassword,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword,
+            RedirectAttributes ra) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUserOpt
+                = userRepository.findByEmail(authentication.getName());
+        if (currentUserOpt.isEmpty() || !currentUserOpt.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        User currentUser = currentUserOpt.get();
+
+        if (!passwordEncoder.matches(currentPassword, currentUser.getPassword())) {
+            ra.addFlashAttribute("passwordError",
+                    "La contraseña actual no es correcta.");
+            return "redirect:/" + id + "/settings";
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            ra.addFlashAttribute("passwordError",
+                    "Las contraseñas nuevas no coinciden.");
+            return "redirect:/" + id + "/settings";
+        }
+
+        if (newPassword.length() < 8) {
+            ra.addFlashAttribute("passwordError",
+                    "La nueva contraseña debe tener al menos 8 caracteres.");
+            return "redirect:/" + id + "/settings";
+        }
+
+        currentUser.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(currentUser);
+
+        ra.addFlashAttribute("passwordSuccess",
+                "Contraseña actualizada correctamente.");
+        return "redirect:/" + id + "/settings";
+    }
+
+    @PostMapping("/{id}/delete-account")
+    public String deleteAccount(@PathVariable Long id,
+            Authentication authentication,
+            HttpServletRequest request,
+            RedirectAttributes ra) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUserOpt
+                = userRepository.findByEmail(authentication.getName());
+        if (currentUserOpt.isEmpty() || !currentUserOpt.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        userRepository.delete(currentUserOpt.get());
+
+        try {
+            request.logout();
+        } catch (Exception e) {
+
+        }
+        SecurityContextHolder.clearContext();
+
+        ra.addFlashAttribute("accountDeleted",
+                "Tu cuenta ha sido eliminada correctamente.");
+        return "redirect:/";
     }
 }

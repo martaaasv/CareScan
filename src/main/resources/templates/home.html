@@ -10,18 +10,33 @@
 
 <body>
     <header>
-        <h1>CareScan</h1>
-        <nav>
-            <a th:href="@{/}">Inicio</a>
+        <div class="logo">CareScan</div>
 
-            <div sec:authorize="isAnonymous()">
-                <a th:href="@{/upload}">Ver demostración</a>
-                <a th:href="@{/about}">Saber más</a>
+        <nav class="main-nav">
+
+            <div class="nav-right">
+
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/upload}">Ver demostración</a>
+                    <a th:href="@{/about}">Saber más</a>
+                </div>
+
+    
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <button type="button" class="user-menu-toggle">
+                        <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
+                        <span class="user-name" th:text="${username}">Usuario</span>
+                        <span class="user-caret">▼</span>
+                    </button>
+
+                    <div class="user-menu-dropdown">
+                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
+                        <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
+                        <a th:href="@{/logout}">Cerrar sesión</a>
+                    </div>
+                </div>
             </div>
-
-            <span sec:authorize="isAuthenticated()">
-                <a th:href="@{/logout}">Cerrar sesión</a>
-            </span>
         </nav>
     </header>
 
@@ -30,7 +45,6 @@
             <h2>Bienvenido a CareScan</h2>
             <p>Escanea, analiza y gestiona resultados médicos fácilmente.</p>
 
-            <!-- Para usuarios no autenticados -->
             <div sec:authorize="isAnonymous()">
                 <p>Inicia sesión o crea tu cuenta para comenzar a usar la plataforma.</p>
                 <a th:href="@{/login}"><button>Iniciar sesión</button></a>
@@ -43,19 +57,23 @@
                 <p>Hola, <strong><span sec:authentication="name"></span></strong> 👋</p>
                 <p>Puedes acceder a tus análisis y gestionar tus resultados.</p>
 
-                <!--<a th:href="@{'/' + ${userId} + '/dashboard'}"><button>Ir a mi panel</button></a>-->
-                <a th:href="@{'/upload/' + ${userId}}"><button>Realizar un análisis</button></a>
+                <a th:href="@{'/upload/' + ${userId}}">
+                    <button>Realizar un análisis</button>
+                </a>
+
                 <a th:href="@{'/upload/' + ${userId} + '/history'}">
                     <button type="button">Ver mis consultas</button>
                 </a>
-            </div>
 
+            </div>
 
             <div sec:authorize="hasRole('ADMIN')">
                 <h3>Panel de administración</h3>
                 <p>Hola, <strong><span sec:authentication="name"></span></strong> 👋</p>
                 <p>Aquí puedes gestionar usuarios, ver estadísticas y administrar el sistema.</p>
-                <a th:href="@{/admin/dashboard}"><button>Ir al panel de administrador</button></a>
+                <a th:href="@{/admin/dashboard}">
+                    <button>Ir al panel de administrador</button>
+                </a>
             </div>
         </div>
     </main>

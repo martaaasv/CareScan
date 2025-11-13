@@ -38,6 +38,7 @@ public class AlgorController {
 
     @GetMapping("/{id}")
     public String showUserUpload(@PathVariable Long id, Model model) {
+        model.addAttribute("username", userRepository.findById(id).map(User::getName).orElse("Usuario"));
         model.addAttribute("userId", id);
         return "upload";
     }
@@ -52,7 +53,7 @@ public class AlgorController {
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file,
             Authentication authentication,
-            RedirectAttributes redirectAttributes) throws IOException {
+            RedirectAttributes redirectAttributes, Model model) throws IOException {
 
         if (authentication == null) {
             return "redirect:/login";
@@ -91,6 +92,8 @@ public class AlgorController {
         imagen.setUser(usuarioAutenticado);
         consultaRepository.save(imagen);
 
+        model.addAttribute("username", usuarioAutenticado.getName());
+        model.addAttribute("userId", id);
         redirectAttributes.addFlashAttribute("fileName", safeName);
         redirectAttributes.addFlashAttribute("randomNumber", randomNumber);
         redirectAttributes.addFlashAttribute("userId", id);
@@ -123,6 +126,7 @@ public class AlgorController {
         }
 
         List<Consulta> consultas = consultaRepository.findByUserOrderByIdDesc(user);
+        model.addAttribute("username", user.getName());
         model.addAttribute("userId", id);
         model.addAttribute("consultas", consultas);
         return "history";
