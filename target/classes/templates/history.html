@@ -13,7 +13,6 @@
         <div class="logo">CareScan</div>
 
         <nav class="main-nav">
-
             <div class="nav-right">
 
                 <div sec:authorize="isAnonymous()">
@@ -21,7 +20,6 @@
                     <a th:href="@{/about}">Saber más</a>
                 </div>
 
-    
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -44,6 +42,9 @@
         <div class="container history-page">
             <h2 class="page-title">Mis consultas</h2>
 
+            <div th:if="${mensajeExito}" class="alert-success" th:text="${mensajeExito}"></div>
+            <div th:if="${mensajeError}" class="alert-error" th:text="${mensajeError}"></div>
+
             <div th:if="${#lists.isEmpty(consultas)}" class="empty-state">
                 <p>No hay consultas todavía.</p>
             </div>
@@ -55,6 +56,7 @@
                         <th>Archivo</th>
                         <th>Resultado</th>
                         <th>Imagen</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +64,14 @@
                         <td th:text="${c.id}">--</td>
                         <td th:text="${c.nombreArchivo}">--</td>
                         <td th:text="${c.resultado}">--</td>
-                        <td><a th:href="${c.ruta}" target="_blank" rel="noopener">Abrir</a></td>
+                        <td>
+                            <a th:href="${c.ruta}" target="_blank" rel="noopener">Abrir</a>
+                        </td>
+                        <td>
+                            <button type="button" class="btn-delete-consulta" th:data-id="${c.id}">
+                                Borrar consulta
+                            </button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -72,13 +81,74 @@
                     <button>Subir nueva imagen</button>
                 </a>
             </div>
+
+            <form id="deleteForm" th:action="@{'/upload/' + ${userId} + '/history/delete'}" method="post">
+                <input type="hidden" name="consultaId" id="consultaIdField">
+                <!--<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />-->
+            </form>
+
+            <div id="confirmModal" class="modal-overlay">
+                <div class="modal">
+                    <p>
+                        ¿Está seguro de querer borrar la consulta?<br>
+                        Esta acción es permanente y no se puede deshacer.
+                    </p>
+                    <div class="modal-buttons">
+                        <button type="button" id="btnAceptar" class="btn-confirm">Aceptar</button>
+                        <button type="button" id="btnCancelar" class="btn-cancel">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main2>
-
 
     <footer>
         <p>&copy; 2026 CareScan - TFG Marta</p>
     </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const deleteButtons = document.querySelectorAll(".btn-delete-consulta");
+            const modal = document.getElementById("confirmModal");
+            const btnAceptar = document.getElementById("btnAceptar");
+            const btnCancelar = document.getElementById("btnCancelar");
+            const deleteForm = document.getElementById("deleteForm");
+            const consultaIdField = document.getElementById("consultaIdField");
+
+            let consultaIdSeleccionada = null;
+
+   
+            deleteButtons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    consultaIdSeleccionada = btn.getAttribute("data-id");
+                    modal.classList.add("active");
+                });
+            });
+
+    
+            btnCancelar.addEventListener("click", () => {
+                modal.classList.remove("active");
+                consultaIdSeleccionada = null;
+            });
+
+       
+            btnAceptar.addEventListener("click", () => {
+                if (consultaIdSeleccionada) {
+                    consultaIdField.value = consultaIdSeleccionada;
+                    deleteForm.submit();
+                }
+            });
+
+            modal.addEventListener("click", (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove("active");
+                    consultaIdSeleccionada = null;
+                }
+            });
+        });
+    </script>
+
 </body>
 
 </html>

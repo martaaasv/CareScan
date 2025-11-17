@@ -633,4 +633,185 @@ main.settings-main {
 .btn-danger:hover {
     background: #c0392b;
     transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(192, 57, 43,
+    box-shadow: 0 6px 14px rgba(192, 57, 43, )
+}
+
+/* Fondo semi-transparente del modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Cuando está visible */
+.modal-overlay.active {
+    display: flex;
+}
+
+/* Caja del modal */
+.modal {
+    background: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Botones del modal */
+.modal-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.modal-buttons button {
+    padding: 0.5rem 1.4rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-confirm {
+    background-color: #e53935;
+    color: #ffffff;
+}
+
+.btn-cancel {
+    background-color: #cfd8dc;
+    color: #263238;
+}
+
+.modal-buttons button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón "Borrar consulta" en la tabla */
+.btn-delete-consulta {
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    border: none;
+    background-color: #ff5252;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-delete-consulta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Mensajes de feedback */
+.alert-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+/* Fondo semi-transparente del modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+/* Cuando está visible */
+.modal-overlay.active {
+    display: flex;
+}
+
+/* Caja del modal */
+.modal {
+    background: #ffffff;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Botones del modal */
+.modal-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.modal-buttons button {
+    padding: 0.5rem 1.4rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-confirm {
+    background-color: #e53935;
+    color: #ffffff;
+}
+
+.btn-cancel {
+    background-color: #cfd8dc;
+    color: #263238;
+}
+
+.modal-buttons button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Botón "Borrar consulta" en la tabla */
+.btn-delete-consulta {
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    border: none;
+    background-color: #ff5252;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-delete-consulta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Mensajes de feedback */
+.alert-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.alert-error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}

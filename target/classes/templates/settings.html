@@ -24,7 +24,7 @@
                     <a th:href="@{/signUp}">Registrarse</a>
                 </div>
 
-                <!-- Menú de usuario -->
+       
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -45,7 +45,6 @@
 
     <main class="settings-main">
         <div class="settings-container">
-            <!-- SIDEBAR -->
             <aside class="settings-sidebar">
                 <div class="settings-sidebar-header">
                     <div class="settings-avatar-circle" th:text="${#strings.substring(username,0,1)}">M</div>
@@ -59,25 +58,20 @@
 
                 <nav class="settings-sidebar-nav">
 
-                    <!-- pestaña Seguridad -->
                     <a href="#" class="settings-nav-link active" data-tab-target="security">Seguridad</a>
-
-                    <!-- pestaña Eliminar cuenta -->
                     <a href="#delete-section" class="settings-nav-link danger-link" data-tab-target="delete">Eliminar
                         cuenta</a>
                 </nav>
             </aside>
 
-            <!-- CONTENIDO -->
             <section class="settings-content">
                 <h1 class="settings-title">Configuración de cuenta</h1>
                 <p class="settings-subtitle">
                     Gestiona la seguridad de tu cuenta y la contraseña.
                 </p>
 
-                <!-- ===== TAB: SEGURIDAD ===== -->
+
                 <div class="settings-tab active" data-tab="security">
-                    <!-- Mensajes solo relacionados con contraseña -->
                     <div th:if="${passwordError}" class="alert alert-error" th:text="${passwordError}"></div>
 
                     <div th:if="${passwordSuccess}" class="alert alert-success" th:text="${passwordSuccess}"></div>
@@ -115,7 +109,7 @@
                     </div>
                 </div>
 
-                <!-- ===== TAB: ELIMINAR CUENTA ===== -->
+
                 <div class="settings-tab" data-tab="delete" id="delete-section">
                     <div th:if="${accountDeleted}" class="alert alert-success" th:text="${accountDeleted}"></div>
 
@@ -170,7 +164,6 @@
                 });
             });
 
-            // Si vienes con hash #delete-section, abre directamente esa pestaña
             if (window.location.hash === '#delete-section') {
                 activateTab('delete');
             }

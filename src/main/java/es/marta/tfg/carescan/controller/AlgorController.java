@@ -103,6 +103,7 @@ public class AlgorController {
 
     @GetMapping("/{id}/results")
     public String showResults(@PathVariable Long id, Model model) {
+        model.addAttribute("username", userRepository.findById(id).map(User::getName).orElse("Usuario"));
         if (!model.containsAttribute("userId")) {
             return "redirect:/upload/" + id;
         }
@@ -160,4 +161,44 @@ public class AlgorController {
         }
         return "redirect:/";
     }
+
+    //Borrar consultas
+    @PostMapping("/{id}/history/delete")
+    public String deleteConsulta(
+            @PathVariable Long id,
+            @RequestParam("consultaId") Long consultaId,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        User user = optionalUser.get();
+
+        if (!user.getId().equals(id)) {
+            return "error/403";
+        }
+
+        Optional<Consulta> optionalConsulta = consultaRepository.findById(consultaId);
+        if (optionalConsulta.isPresent()) {
+            Consulta consulta = optionalConsulta.get();
+            if (consulta.getUser().getId().equals(user.getId())) {
+                consultaRepository.delete(consulta);
+                redirectAttributes.addFlashAttribute("mensajeExito", "La consulta se ha borrado correctamente.");
+            } else {
+                redirectAttributes.addFlashAttribute("mensajeError", "No puedes borrar consultas de otro usuario.");
+            }
+        } else {
+            redirectAttributes.addFlashAttribute("mensajeError", "La consulta indicada no existe.");
+        }
+
+        return "redirect:/upload/" + id + "/history";
+    }
+
 }
