@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareScan - Panel administrador</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+
+<body>
+    <header>
+        <div class="logo">CareScan - Admin</div>
+
+        <nav class="main-nav">
+            <div class="nav-right">
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <button type="button" class="user-menu-toggle">
+                        <span class="user-name" sec:authentication="name">Admin</span>
+                        <span class="user-caret">▼</span>
+                    </button>
+                    <div class="user-menu-dropdown">
+                        <div sec:authorize="hasRole('ADMIN')">
+                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                            <a th:href="@{/admin/dashboard}">Panel de administración</a>
+                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                            <a th:href="@{/logout}">Cerrar sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main2>
+        <div class="container history-page">
+            <h2 class="page-title">Panel de administración</h2>
+
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <h3>Total de usuarios</h3>
+                    <p th:text="${totalUsuarios}">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total de consultas</h3>
+                    <p th:text="${totalConsultas}">0</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 2rem;">Consultas por usuario</h3>
+
+            <table class="styled-table" th:if="${!#maps.isEmpty(consultasPorUsuario)}">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Nº de consultas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="u : ${users}">
+                        <td th:text="${u.name}">Nombre</td>
+                        <td th:text="${u.email}">email@example.com</td>
+                        <td th:text="${consultasCount[u.id]}">0</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div th:if="${#lists.isEmpty(users)}" class="empty-state">
+                <p>No hay datos de consultas todavía.</p>
+            </div>
+
+        </div>
+    </main2>
+
+    <footer>
+        <p>&copy; 2026 CareScan - TFG Marta</p>
+    </footer>
+</body>
+
+</html>

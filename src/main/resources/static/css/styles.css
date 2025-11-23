@@ -815,3 +815,20 @@ main.settings-main {
     border-radius: 6px;
     margin-bottom: 1rem;
 }
+
+.stats-cards {
+    display: flex;
+    gap: 2rem;              
+    justify-content: center; 
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    min-width: 180px;
+    text-align: center;
+    flex: 1;
+}

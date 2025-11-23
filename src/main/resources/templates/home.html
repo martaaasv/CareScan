@@ -17,11 +17,10 @@
             <div class="nav-right">
 
                 <div sec:authorize="isAnonymous()">
-                    <a th:href="@{/upload}">Ver demostración</a>
                     <a th:href="@{/about}">Saber más</a>
                 </div>
 
-    
+
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -29,14 +28,23 @@
                         <span class="user-caret">▼</span>
                     </button>
 
+
                     <div class="user-menu-dropdown">
-                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-                        <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                        <a th:href="@{/logout}">Cerrar sesión</a>
+                        <div sec:authorize="hasRole('ADMIN')">
+                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                            <a th:href="@{/admin/dashboard}">Panel de administración</a>
+                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                            <a th:href="@{/logout}">Cerrar sesión</a>
+                        </div>
+
+                        <div sec:authorize="hasRole('USER')">
+                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                            <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
+                            <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
+                            <a th:href="@{/logout}">Cerrar sesión</a>
+                        </div>
                     </div>
                 </div>
-            </div>
         </nav>
     </header>
 

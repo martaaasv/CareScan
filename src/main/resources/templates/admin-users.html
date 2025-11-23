@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareScan - Gestión de usuarios</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+
+<body>
+    <header>
+        <div class="logo">CareScan - Admin</div>
+
+        <nav class="main-nav">
+            <div class="nav-right">
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <button type="button" class="user-menu-toggle">
+                        <span class="user-name" sec:authentication="name">Admin</span>
+                        <span class="user-caret">▼</span>
+                    </button>
+                    <div class="user-menu-dropdown">
+                        <div sec:authorize="hasRole('ADMIN')">
+                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                            <a th:href="@{/admin/dashboard}">Panel de administración</a>
+                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                            <a th:href="@{/logout}">Cerrar sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main2>
+        <div class="container history-page">
+            <h2 class="page-title">Gestión de usuarios</h2>
+
+            <div th:if="${mensajeExito}" class="alert-success" th:text="${mensajeExito}"></div>
+            <div th:if="${mensajeError}" class="alert-error" th:text="${mensajeError}"></div>
+
+            <div th:if="${#lists.isEmpty(users)}" class="empty-state">
+                <p>No hay usuarios registrados.</p>
+            </div>
+
+            <table th:if="${!#lists.isEmpty(users)}" class="styled-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Nº consultas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="u : ${users}">
+                        <td th:text="${u.id}">1</td>
+                        <td th:text="${u.name}">Nombre</td>
+                        <td th:text="${u.email}">email@example.com</td>
+                        <td th:text="${u.role}">USER</td>
+                        <td th:text="${consultasCount[u.id]}">0</td>
+                        <td>
+                            <form th:action="@{'/admin/users/' + ${u.id} + '/role'}" method="post"
+                                style="display:inline;">
+                                <select name="role">
+                                    <option th:value="${T(es.marta.tfg.carescan.model.Role).USER}"
+                                        th:selected="${u.role == T(es.marta.tfg.carescan.model.Role).USER}">
+                                        USER
+                                    </option>
+                                    <option th:value="${T(es.marta.tfg.carescan.model.Role).ADMIN}"
+                                        th:selected="${u.role == T(es.marta.tfg.carescan.model.Role).ADMIN}">
+                                        ADMIN
+                                    </option>
+                                </select>
+                                <button type="submit">Actualizar rol</button>
+                            </form>
+
+
+                            <form th:action="@{'/admin/users/' + ${u.id} + '/delete'}" method="post"
+                                style="display:inline;"
+                                onsubmit="return confirm('¿Seguro que deseas borrar esta cuenta y sus consultas?');">
+                                <button type="submit" class="btn-delete">Borrar</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main2>
+
+    <footer>
+        <p>&copy; 2026 CareScan - TFG Marta</p>
+    </footer>
+</body>
+
+</html>

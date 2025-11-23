@@ -11,5 +11,6 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
 
     //List<Consulta> findByUserOrderByIdDesc(User user);
     List<Consulta> findByUserOrderByFechaHoraDesc(User user);
-
+    long countByUser(User user);
+    void deleteByUser(User user);
 }
