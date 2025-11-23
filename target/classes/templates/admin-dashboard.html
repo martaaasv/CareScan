@@ -10,21 +10,22 @@
 
 <body>
     <header>
-        <div class="logo">CareScan - Admin</div>
+        <div class="logo">CareScan</div>
 
         <nav class="main-nav">
             <div class="nav-right">
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
-                        <span class="user-name" sec:authentication="name">Admin</span>
-                        <span class="user-caret">▼</span>
+                        <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
+                        <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
+
                     <div class="user-menu-dropdown">
                         <div sec:authorize="hasRole('ADMIN')">
                             <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
                             <a th:href="@{/admin/dashboard}">Panel de administración</a>
                             <a th:href="@{/admin/users}">Gestión de usuarios</a>
-                            <a th:href="@{/logout}">Cerrar sesión</a>
+                            <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                         </div>
                     </div>
                 </div>
@@ -34,7 +35,6 @@
 
     <main2>
         <div class="container history-page">
-            <h2 class="page-title">Panel de administración</h2>
 
             <div class="stats-cards">
                 <div class="stat-card">
@@ -49,7 +49,7 @@
 
             <h3 style="margin-top: 2rem;">Consultas por usuario</h3>
 
-            <table class="styled-table" th:if="${!#maps.isEmpty(consultasPorUsuario)}">
+            <table class="styled-table" th:if="${!#lists.isEmpty(users)}">
                 <thead>
                     <tr>
                         <th>Usuario</th>
@@ -76,6 +76,39 @@
     <footer>
         <p>&copy; 2026 CareScan - TFG Marta</p>
     </footer>
+
+    <!-- MODAL DE CONFIRMAR LOGOUT -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal">
+            <p>
+                ¿Seguro que deseas cerrar sesión?<br>
+                Tendrás que volver a iniciar sesión para continuar.
+            </p>
+            <div class="modal-buttons">
+                <button type="button" class="btn-confirm" onclick="confirmLogout()">Cerrar sesión</button>
+                <button type="button" class="btn-cancel" onclick="closeLogoutModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openLogoutModal() {
+            document.getElementById("logoutModal").classList.add("active");
+        }
+
+        function closeLogoutModal() {
+            document.getElementById("logoutModal").classList.remove("active");
+        }
+
+        function confirmLogout() {
+            window.location.href = "/logout";
+        }
+
+        // Cerrar modal haciendo clic fuera
+        document.getElementById("logoutModal").addEventListener("click", function (e) {
+            if (e.target === this) closeLogoutModal();
+        });
+    </script>
+
 </body>
 
 </html>

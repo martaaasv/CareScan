@@ -52,12 +52,13 @@ public class AdminController {
 
         User admin = userRepository.findByEmail(auth.getName()).get();
         model.addAttribute("userId", admin.getId());
+        model.addAttribute("username", admin.getName());
 
         return "admin-dashboard";
     }
 
     @GetMapping("/users")
-    public String listUsers(Model model) {
+    public String listUsers(Model model, Authentication auth) {
 
         List<User> users = userRepository.findAll();
 
@@ -69,6 +70,9 @@ public class AdminController {
 
         model.addAttribute("users", users);
         model.addAttribute("consultasCount", consultasCount);
+        User admin = userRepository.findByEmail(auth.getName()).get();
+        model.addAttribute("userId", admin.getId());
+        model.addAttribute("username", admin.getName());
 
         return "admin-users";
     }
