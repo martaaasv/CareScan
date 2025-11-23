@@ -54,7 +54,7 @@
 
             <div sec:authorize="hasRole('USER')">
                 <h3>Zona de usuario</h3>
-                <p>Hola, <strong><span sec:authentication="name"></span></strong> 👋</p>
+                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
                 <p>Puedes acceder a tus análisis y gestionar tus resultados.</p>
 
                 <a th:href="@{'/upload/' + ${userId}}">
@@ -69,7 +69,7 @@
 
             <div sec:authorize="hasRole('ADMIN')">
                 <h3>Panel de administración</h3>
-                <p>Hola, <strong><span sec:authentication="name"></span></strong> 👋</p>
+                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
                 <p>Aquí puedes gestionar usuarios, ver estadísticas y administrar el sistema.</p>
                 <a th:href="@{/admin/dashboard}">
                     <button>Ir al panel de administrador</button>

@@ -52,7 +52,7 @@
             <table th:if="${!#lists.isEmpty(consultas)}" class="styled-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Fecha y hora</th>
                         <th>Archivo</th>
                         <th>Resultado</th>
                         <th>Imagen</th>
@@ -61,11 +61,14 @@
                 </thead>
                 <tbody>
                     <tr th:each="c : ${consultas}">
-                        <td th:text="${c.id}">--</td>
+                        <td th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy HH:mm')}">--</td>
                         <td th:text="${c.nombreArchivo}">--</td>
                         <td th:text="${c.resultado}">--</td>
                         <td>
-                            <a th:href="${c.ruta}" target="_blank" rel="noopener">Abrir</a>
+                            <a th:href="@{'/upload/consulta/' + ${c.id} + '/imagen'}" target="_blank" rel="noopener">
+                                <img th:src="@{'/upload/consulta/' + ${c.id} + '/imagen'}" alt="Imagen de la consulta"
+                                    style="max-width: 120px; max-height: 120px; border-radius: 4px;">
+                            </a>
                         </td>
                         <td>
                             <button type="button" class="btn-delete-consulta" th:data-id="${c.id}">
@@ -118,7 +121,6 @@
 
             let consultaIdSeleccionada = null;
 
-   
             deleteButtons.forEach(btn => {
                 btn.addEventListener("click", () => {
                     consultaIdSeleccionada = btn.getAttribute("data-id");
@@ -126,13 +128,11 @@
                 });
             });
 
-    
             btnCancelar.addEventListener("click", () => {
                 modal.classList.remove("active");
                 consultaIdSeleccionada = null;
             });
 
-       
             btnAceptar.addEventListener("click", () => {
                 if (consultaIdSeleccionada) {
                     consultaIdField.value = consultaIdSeleccionada;

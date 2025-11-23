@@ -1,15 +1,15 @@
 package es.marta.tfg.carescan.controller;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.time.LocalDateTime;
+
 
 import es.marta.tfg.carescan.model.Consulta;
 import es.marta.tfg.carescan.model.User;
@@ -76,20 +78,16 @@ public class AlgorController {
         String originalName = file.getOriginalFilename();
         String safeName = (originalName == null) ? "archivo" : Paths.get(originalName).getFileName().toString();
 
-        Path uploadPath = Paths.get("uploads", String.valueOf(id));
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-        Path filePath = uploadPath.resolve(safeName);
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
         int randomNumber = new Random().nextInt(100);
 
         Consulta imagen = new Consulta();
         imagen.setNombreArchivo(safeName);
-        imagen.setRuta("/uploads/" + id + "/" + safeName);
         imagen.setResultado(randomNumber);
         imagen.setUser(usuarioAutenticado);
+        imagen.setImagen(file.getBytes());
+        imagen.setContentType(file.getContentType());
+        imagen.setFechaHora(LocalDateTime.now());
+
         consultaRepository.save(imagen);
 
         model.addAttribute("username", usuarioAutenticado.getName());
@@ -126,7 +124,7 @@ public class AlgorController {
             return "error/403";
         }
 
-        List<Consulta> consultas = consultaRepository.findByUserOrderByIdDesc(user);
+        List<Consulta> consultas = consultaRepository.findByUserOrderByFechaHoraDesc(user);
         model.addAttribute("username", user.getName());
         model.addAttribute("userId", id);
         model.addAttribute("consultas", consultas);
@@ -162,7 +160,7 @@ public class AlgorController {
         return "redirect:/";
     }
 
-    //Borrar consultas
+    
     @PostMapping("/{id}/history/delete")
     public String deleteConsulta(
             @PathVariable Long id,
@@ -201,4 +199,49 @@ public class AlgorController {
         return "redirect:/upload/" + id + "/history";
     }
 
+   
+    @GetMapping("/consulta/{consultaId}/imagen")
+    public ResponseEntity<byte[]> verImagen(
+            @PathVariable Long consultaId,
+            Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(302)
+                    .header(HttpHeaders.LOCATION, "/login")
+                    .build();
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(302)
+                    .header(HttpHeaders.LOCATION, "/login")
+                    .build();
+        }
+
+        User user = optionalUser.get();
+
+        Optional<Consulta> optionalConsulta = consultaRepository.findById(consultaId);
+        if (optionalConsulta.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Consulta consulta = optionalConsulta.get();
+
+        if (!consulta.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        if (consulta.getImagen() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String contentType = consulta.getContentType();
+        MediaType mediaType = (contentType != null)
+                ? MediaType.parseMediaType(contentType)
+                : MediaType.APPLICATION_OCTET_STREAM;
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .body(consulta.getImagen());
+    }
 }

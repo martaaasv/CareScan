@@ -13,7 +13,6 @@
         <div class="logo">CareScan</div>
 
         <nav class="main-nav">
-
             <div class="nav-right">
 
                 <div sec:authorize="isAnonymous()">
@@ -21,7 +20,6 @@
                     <a th:href="@{/about}">Saber más</a>
                 </div>
 
-    
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -45,19 +43,19 @@
             <h2>Subir una imagen</h2>
             <p>Selecciona una imagen desde tu dispositivo para realizar la demostración.</p>
 
-
             <form th:action="@{'/upload/' + ${userId} + '/upload'}" method="post" enctype="multipart/form-data">
                 <input type="file" name="file" accept="image/*" required>
                 <br>
                 <button type="submit">Subir</button>
             </form>
 
-
-            <!--<div style="margin-top: 20px;">
+            <!--
+            <div style="margin-top: 20px;">
                 <a th:href="@{'/upload/' + ${userId} + '/history'}">
                     <button type="button">Ver mis consultas</button>
                 </a>
-            </div>-->
+            </div>
+            -->
         </div>
     </main>
 

@@ -1,10 +1,14 @@
 package es.marta.tfg.carescan.model;
 
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 
 @Entity
@@ -15,16 +19,20 @@ public class Consulta {
     private Long id;
 
     private String nombreArchivo;
-    private String ruta;
 
     private Integer resultado;
 
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] imagen;
+
+    private String contentType;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
+    private LocalDateTime fechaHora;
 
-    // ===== GETTERS Y SETTERS =====
     public Long getId() {
         return id;
     }
@@ -41,14 +49,6 @@ public class Consulta {
         this.nombreArchivo = nombreArchivo;
     }
 
-    public String getRuta() {
-        return ruta;
-    }
-
-    public void setRuta(String ruta) {
-        this.ruta = ruta;
-    }
-
     public Integer getResultado() {
         return resultado;
     }
@@ -57,11 +57,35 @@ public class Consulta {
         this.resultado = resultado;
     }
 
+    public byte[] getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(byte[] imagen) {
+        this.imagen = imagen;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
     public User getUser() {
         return user;
     }
 
     public void setUser(User usuarioAutenticado) {
-        this.user = (usuarioAutenticado);
+        this.user = usuarioAutenticado;
+    }
+
+    public LocalDateTime getFechaHora() {
+        return fechaHora;
+    }
+    
+    public void setFechaHora(LocalDateTime fechaHora) {
+        this.fechaHora = fechaHora;
     }
 }
