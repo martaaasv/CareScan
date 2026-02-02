@@ -1,8 +1,9 @@
 package es.marta.tfg.carescan.model;
 
 public enum Role {
-    ANONYMOUS,
-    USER,
-    ADMIN
+    ADMIN_IT,
+    ADMIN_HOSPITAL,
+    MEDICO,
+    PACIENTE
 }
 

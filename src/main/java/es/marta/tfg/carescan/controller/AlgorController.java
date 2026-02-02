@@ -2,6 +2,7 @@ package es.marta.tfg.carescan.controller;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -20,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.time.LocalDateTime;
-
 
 import es.marta.tfg.carescan.model.Consulta;
 import es.marta.tfg.carescan.model.User;
@@ -61,7 +60,7 @@ public class AlgorController {
             return "redirect:/login";
         }
         if (file == null || file.isEmpty()) {
-            return "redirect:/upload/" + id + "/history?error=empty";
+            return "redirect:/upload/" + id;
         }
 
         String email = authentication.getName();
@@ -130,36 +129,6 @@ public class AlgorController {
         model.addAttribute("consultas", consultas);
         return "history";
     }
-
-    @GetMapping("/{id}/my-images")
-    public String legacyMyImagesRedirect(@PathVariable Long id) {
-        return "redirect:/upload/" + id + "/history";
-    }
-
-    @GetMapping("/my-images")
-    public String redirectToUserImages(Authentication authentication) {
-        if (authentication == null) {
-            return "redirect:/login";
-        }
-        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
-        if (optionalUser.isEmpty()) {
-            return "redirect:/login";
-        }
-        Long id = optionalUser.get().getId();
-        return "redirect:/upload/" + id + "/history";
-    }
-
-    @GetMapping
-    public String uploadRoot(Authentication auth) {
-        if (auth != null) {
-            Optional<User> opt = userRepository.findByEmail(auth.getName());
-            if (opt.isPresent()) {
-                return "redirect:/upload/" + opt.get().getId();
-            }
-        }
-        return "redirect:/";
-    }
-
     
     @PostMapping("/{id}/history/delete")
     public String deleteConsulta(

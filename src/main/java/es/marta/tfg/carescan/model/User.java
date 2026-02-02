@@ -24,6 +24,9 @@ public class User {
 
     private String password;
 
+    @Column(nullable = false)
+    private boolean temporalPassword = false; //esta es la contraseña q te dan la primera vez y HAY Q CAMBIAR
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -83,4 +86,12 @@ public class User {
     public void setRole(Role role) {
         this.role = role;
     }
+
+    public boolean isTemporalPassword() {
+        return temporalPassword;
+    }
+    public void setTemporalPassword(boolean temporalPassword) {
+        this.temporalPassword = temporalPassword;
+    }
+    
 }

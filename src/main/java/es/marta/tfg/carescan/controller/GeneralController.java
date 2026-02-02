@@ -49,39 +49,40 @@ public class GeneralController {
         return "login";
     }
 
-    @GetMapping("/signUp")
-    public String signUp(Model model) {
-        if (!model.containsAttribute("form")) {
-            model.addAttribute("form", new signUp());
-        }
-        return "signUp";
-    }
+    // @GetMapping("/signUp")
+    // public String signUp(Model model) {
+    //     if (!model.containsAttribute("form")) {
+    //         model.addAttribute("form", new signUp());
+    //     }
+    //     return "signUp";
+    // }
 
-    @PostMapping("/signUp")
-    public String procesarRegistro(
-            @Valid @ModelAttribute("form") signUp form,
-            BindingResult binding,
-            RedirectAttributes ra) {
+   
+    // @PostMapping("/signUp")
+    // public String procesarRegistro(
+    //         @Valid @ModelAttribute("form") signUp form,
+    //         BindingResult binding,
+    //         RedirectAttributes ra) {
 
-        if (userRepository.existsByEmail(form.getEmail())) {
-            binding.rejectValue("email", "exists", "Ya existe una cuenta con este email");
-        }
+    //     if (userRepository.existsByEmail(form.getEmail())) {
+    //         binding.rejectValue("email", "exists", "Ya existe una cuenta con este email");
+    //     }
 
-        if (binding.hasErrors()) {
-            ra.addFlashAttribute("org.springframework.validation.BindingResult.form", binding);
-            ra.addFlashAttribute("form", form);
-            return "redirect:/signUp";
-        }
+    //     if (binding.hasErrors()) {
+    //         ra.addFlashAttribute("org.springframework.validation.BindingResult.form", binding);
+    //         ra.addFlashAttribute("form", form);
+    //         return "redirect:/signUp";
+    //     }
 
-        User newUser = new User();
-        newUser.setName(form.getName());
-        newUser.setEmail(form.getEmail());
-        newUser.setPassword(passwordEncoder.encode(form.getPassword()));
-        newUser.setRole(Role.USER);
-        userRepository.save(newUser);
+    //     User newUser = new User();
+    //     newUser.setName(form.getName());
+    //     newUser.setEmail(form.getEmail());
+    //     newUser.setPassword(passwordEncoder.encode(form.getPassword()));
+    //     newUser.setRole(Role.USER);
+    //     userRepository.save(newUser);
 
-        return "redirect:/login";
-    }
+    //     return "redirect:/login";
+    // }
 
     @GetMapping("/{id}/home")
     public String userHome(@PathVariable Long id,

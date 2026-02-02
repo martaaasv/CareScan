@@ -24,14 +24,14 @@ public class SampleData {
                 admin.setName("Admin");
                 admin.setEmail("admin@carescan.com");
                 admin.setPassword(new BCryptPasswordEncoder().encode("1234admin"));
-                admin.setRole(Role.ADMIN);
+                admin.setRole(Role.ADMIN_IT);
                 userRepository.save(admin);
 
                 User user1 = new User();
                 user1.setName("User");
                 user1.setEmail("user@gmail.com");
                 user1.setPassword(new BCryptPasswordEncoder().encode("1234user"));
-                user1.setRole(Role.USER);
+                user1.setRole(Role.MEDICO);
                 userRepository.save(user1);
 
 

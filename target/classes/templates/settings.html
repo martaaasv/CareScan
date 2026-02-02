@@ -23,7 +23,7 @@
                     <a th:href="@{/signUp}">Registrarse</a>
                 </div>
 
-       
+
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -34,7 +34,7 @@
                         <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
                         <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
                         <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                       <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                     </div>
                 </div>
             </div>
@@ -167,7 +167,7 @@
             }
         });
     </script>
-     <!-- MODAL DE CONFIRMAR LOGOUT -->
+    <!-- MODAL DE CONFIRMAR LOGOUT -->
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>

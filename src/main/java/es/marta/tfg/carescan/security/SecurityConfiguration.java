@@ -86,9 +86,13 @@ public class SecurityConfiguration {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/upload/**", "/results","/home", "/login", "/signUp", "/error", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN") 
-                .requestMatchers("/user/**").hasAnyRole("USER", "ADMIN") 
+                .requestMatchers("/", "/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN_IT")
+                .requestMatchers("/admin-hospital/**").hasRole("ADMIN_HOSPITAL")
+                .requestMatchers("/medico/**").hasRole("MEDICO")
+                .requestMatchers("/paciente/**").hasRole("PACIENTE")
+                .requestMatchers("/upload/**", "/results", "/home", "/user/**")
+                .hasAnyRole("MEDICO", "PACIENTE")
                 .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -96,7 +100,7 @@ public class SecurityConfiguration {
                 .loginProcessingUrl("/login")
                 .usernameParameter("email")
                 .passwordParameter("password")
-                .successHandler(successHandler) 
+                .successHandler(successHandler)
                 .failureUrl("/login?error=true")
                 .permitAll()
                 )
