@@ -29,7 +29,7 @@
                         <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
                         <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
                         <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                       <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                     </div>
                 </div>
             </div>
@@ -39,9 +39,15 @@
     <main>
         <div class="container">
             <h2>Subir una imagen</h2>
+
+            <p><b>Paciente:</b> <span th:text="${patient.name}">—</span></p>
+            <p><b>Email:</b> <span th:text="${patient.email}">—</span></p>
+
             <p>Selecciona una imagen desde tu dispositivo para realizar la demostración.</p>
 
-            <form th:action="@{'/upload/' + ${userId} + '/upload'}" method="post" enctype="multipart/form-data">
+            <form th:action="@{/medico/patients/{patientId}/upload(patientId=${patient.id})}" method="post"
+                enctype="multipart/form-data">
+
                 <input type="file" name="file" accept="image/*" required>
                 <br>
                 <button type="submit">Subir</button>
@@ -54,7 +60,7 @@
         <p>&copy; 2026 CareScan - TFG Marta</p>
     </footer>
 
-     <!-- MODAL DE CONFIRMAR LOGOUT -->
+    <!-- MODAL DE CONFIRMAR LOGOUT -->
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>

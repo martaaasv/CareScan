@@ -22,9 +22,16 @@ public class CustomLogin implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
 
-        User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
+        User user = userRepository.findByEmail(authentication.getName()).orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + authentication.getName()));
 
-        response.sendRedirect("/" +user.getId() + "/home");
+        if(user.isTemporalPassword()){
+            response.sendRedirect("/" + user.getId() + "/change-password");
+            return;
+        } else {
+            response.sendRedirect("/home");
+
+        }
+        
     }
 }
 

@@ -2,6 +2,7 @@ package es.marta.tfg.carescan.model;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class Consulta {
@@ -27,11 +29,20 @@ public class Consulta {
     private byte[] imagen;
 
     private String contentType;
+
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
 
+    // "Dueño" de la radiografía
+    @ManyToOne
+    @JoinColumn(name = "patientId", nullable = false)
+    private User patient;
+
     private LocalDateTime fechaHora;
+
+    @OneToOne(mappedBy = "consulta", cascade = CascadeType.ALL)
+    private AnalisisIA analisisIA;
 
     public Long getId() {
         return id;
@@ -84,8 +95,25 @@ public class Consulta {
     public LocalDateTime getFechaHora() {
         return fechaHora;
     }
-    
+
     public void setFechaHora(LocalDateTime fechaHora) {
         this.fechaHora = fechaHora;
     }
+
+    public User getPatient() {
+        return patient;
+    }
+
+    public void setPatient(User patient) {
+        this.patient = patient;
+    }
+
+    public AnalisisIA getAnalisisIA() {
+        return analisisIA;
+    }
+
+    public void setAnalisisIA(AnalisisIA analisisIA) {
+        this.analisisIA = analisisIA;
+    }
+
 }

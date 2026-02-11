@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mis resultados</title>
+</head>
+
+<body>
+
+    <h2>Resultados publicados</h2>
+
+    <div th:if="${#lists.isEmpty(consultas)}">
+        <p>No hay resultados publicados.</p>
+    </div>
+
+    <div th:each="c : ${consultas}">
+        <hr>
+        <p><b>Fecha:</b> <span th:text="${c.fechaHora}"></span></p>
+        <p><b>Probabilidad:</b> <span th:text="${c.analisisIA.probabilidad}"></span></p>
+        <p><b>Etiqueta:</b> <span th:text="${c.analisisIA.etiqueta}"></span></p>
+    </div>
+
+    <p><a th:href="@{/}">Inicio</a></p>
+
+</body>
+
+</html>

@@ -1,5 +1,8 @@
 package es.marta.tfg.carescan.model;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -7,6 +10,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -31,6 +37,17 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @ManyToMany
+    @JoinTable( // Pacientes de un médico
+            name = "doctorPatient",
+            joinColumns = @JoinColumn(name = "doctorId"),
+            inverseJoinColumns = @JoinColumn(name = "patientId")
+    )
+    private Set<User> patients = new HashSet<>();
+
+    @ManyToMany(mappedBy = "patients") // Médicos de un paciente
+    private Set<User> doctors = new HashSet<>();
+
     public User() {
     }
 
@@ -39,6 +56,7 @@ public class User {
         this.password = password;
         this.email = email;
     }
+
     public User(String name, String password, String email, Role role) {
         this.name = name;
         this.password = password;
@@ -46,7 +64,6 @@ public class User {
         this.role = role;
     }
 
-    
     public Long getId() {
         return id;
     }
@@ -90,8 +107,25 @@ public class User {
     public boolean isTemporalPassword() {
         return temporalPassword;
     }
+
     public void setTemporalPassword(boolean temporalPassword) {
         this.temporalPassword = temporalPassword;
     }
-    
+
+    public Set<User> getPatients() {
+        return patients;
+    }
+
+    public void setPatients(Set<User> patients) {
+        this.patients = patients;
+    }
+
+    public Set<User> getDoctors() {
+        return doctors;
+    }
+
+    public void setDoctors(Set<User> doctors) {
+        this.doctors = doctors;
+    }
+
 }

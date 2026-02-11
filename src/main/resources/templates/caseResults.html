@@ -7,6 +7,7 @@
     <title>Resultados</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
+
 <body>
     <header>
         <div class="logo">CareScan</div>
@@ -20,7 +21,7 @@
                     <a th:href="@{/about}">Saber más</a>
                 </div>
 
-    
+
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -30,7 +31,7 @@
                     <div class="user-menu-dropdown">
                         <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
                         <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-                        <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
+                        <a th:href="@{/medico/patients}">Mis pacientes</a>
                         <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                     </div>
                 </div>
@@ -45,12 +46,40 @@
             <p th:if="${error}" th:text="${error}"></p>
 
             <div th:unless="${error}">
-                <p>Imagen subida: <span th:text="${fileName}">—</span></p>
-                <p>Número aleatorio generado: <span th:text="${randomNumber}">—</span></p>
+                <p><b>Paciente:</b> <span th:text="${patient.name}">—</span></p>
+                <p><b>Email:</b> <span th:text="${patient.email}">—</span></p>
+
+                <div th:if="${consulta.analisisIA != null}">
+                    <p><b>Probabilidad:</b> <span th:text="${consulta.analisisIA.probabilidad}">—</span></p>
+                    <p><b>Etiqueta:</b> <span th:text="${consulta.analisisIA.etiqueta}">—</span></p>
+                    <p><b>Modelo:</b> <span th:text="${consulta.analisisIA.modeloVersion}">—</span></p>
+                </div>
+
+                <div th:if="${consulta.analisisIA != null}">
+
+                    <div th:if="${!consulta.analisisIA.visiblePaciente}">
+                        <form th:action="@{/medico/consultas/{id}/publish(id=${consulta.id})}" method="post">
+                            <button type="submit">Publicar resultado al paciente</button>
+                        </form>
+                    </div>
+
+                    <div th:if="${consulta.analisisIA.visiblePaciente}">
+                        <p style="color:green;"><b>Resultado publicado al paciente</b></p>
+                    </div>
+
+                </div>
+
+
+                <p th:if="${consulta.analisisIA == null}">
+                    Aún no hay análisis disponible.
+                </p>
+
 
             </div>
 
-            <a th:href="@{'/' + ${userId} + '/home'}" class="btn">Volver</a>
+
+            <a th:href="@{/medico/patients}" class="btn">Volver</a>
+
 
         </div>
     </main>
@@ -59,7 +88,7 @@
         <p>&copy; 2026 CareScan - TFG Marta</p>
     </footer>
 
-     <!-- MODAL DE CONFIRMAR LOGOUT -->
+    <!-- CONFIRMAR LOGOUT -->
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>
@@ -85,7 +114,6 @@
             window.location.href = "/logout";
         }
 
-        // Cerrar modal haciendo clic fuera
         document.getElementById("logoutModal").addEventListener("click", function (e) {
             if (e.target === this) closeLogoutModal();
         });

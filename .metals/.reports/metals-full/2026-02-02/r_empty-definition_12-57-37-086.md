@@ -1,3 +1,14 @@
+error id: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/GeneralController.java:_empty_/RedirectAttributes#addFlashAttribute#
+file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/GeneralController.java
+empty definition using pc, found symbol in pc: _empty_/RedirectAttributes#addFlashAttribute#
+empty definition using semanticdb
+empty definition using fallback
+non-local guesses:
+
+offset: 6110
+uri: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/GeneralController.java
+text:
+```scala
 package es.marta.tfg.carescan.controller;
 
 import java.util.Optional;
@@ -165,7 +176,7 @@ public class GeneralController {
         currentUser.setTemporalPassword(false);
         userRepository.save(currentUser);
 
-        ra.addFlashAttribute("passwordSuccess",
+        ra.addFlashAttr@@ibute("passwordSuccess",
                 "Contraseña actualizada correctamente.");
         return "redirect:/" + id + "/settings";
     }
@@ -200,3 +211,10 @@ public class GeneralController {
         return "redirect:/";
     }
 }
+
+```
+
+
+#### Short summary: 
+
+empty definition using pc, found symbol in pc: _empty_/RedirectAttributes#addFlashAttribute#

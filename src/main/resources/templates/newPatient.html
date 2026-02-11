@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Alta de paciente</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+    <h2>Alta de paciente (Admin Hospital)</h2>
+
+    <div th:if="${username}">
+        <p>Sesión: <b th:text="${username}"></b></p>
+    </div>
+
+    <div th:if="${error}" style="color:red;">
+        <p th:text="${error}"></p>
+    </div>
+
+    <div th:if="${success}" style="color:green;">
+        <p th:text="${success}"></p>
+    </div>
+
+    <div th:if="${tempPassword}" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
+        <p><b>Email:</b> <span th:text="${createdEmail}"></span></p>
+        <p><b>Contraseña temporal:</b> <span th:text="${tempPassword}"></span></p>
+        <p style="color:#b00;"><b>Cópiala ahora:</b> no se volverá a mostrar.</p>
+    </div>
+
+    <form th:action="@{/admin-hospital/patients}" method="post">
+        <div>
+            <label>Nombre:</label>
+            <input type="text" name="name" required>
+        </div>
+
+        <div>
+            <label>Email:</label>
+            <input type="email" name="email" required>
+        </div>
+
+        <button type="submit">Crear paciente</button>
+    </form>
+
+    <p><a th:href="@{/admin/dashboard}">Volver al panel</a></p>
+
+</body>
+
+</html>
