@@ -20,28 +20,41 @@
                     <a th:href="@{/about}">Saber más</a>
                 </div>
 
-
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
                         <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
 
-
                     <div class="user-menu-dropdown">
-                        <div sec:authorize="hasRole('ADMIN')">
-                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                            <a th:href="@{/admin/dashboard}">Panel de administración</a>
+
+                        <!-- Links comunes a cualquier usuario autenticado -->
+                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
+
+                        <!-- ADMIN IT -->
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}">Panel de administración IT</a>
                             <a th:href="@{/admin/users}">Gestión de usuarios</a>
-                           <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                         </div>
 
-                        <div sec:authorize="hasRole('USER')">
-                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                            <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-                            <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                            <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <!-- ADMIN HOSPITAL -->
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients/new}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}">Asignar médico/paciente</a>
                         </div>
+
+                        <!-- MÉDICO -->
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}">Mis pacientes</a>
+                        </div>
+
+                        <!-- PACIENTE -->
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}">Mis resultados</a>
+                        </div>
+
+                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                     </div>
                 </div>
         </nav>
@@ -55,31 +68,54 @@
             <div sec:authorize="isAnonymous()">
                 <p>Inicia sesión o crea tu cuenta para comenzar a usar la plataforma.</p>
                 <a th:href="@{/login}"><button>Iniciar sesión</button></a>
-                <a th:href="@{/signUp}"><button>Registrarse</button></a>
+                <!-- SignUp ya no es público en el nuevo flujo; lo ocultamos -->
             </div>
 
-
-            <div sec:authorize="hasRole('USER')">
-                <h3>Zona de usuario</h3>
+            <!-- PACIENTE -->
+            <div sec:authorize="hasRole('PACIENTE')">
+                <h3>Zona de paciente</h3>
                 <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
-                <p>Puedes acceder a tus análisis y gestionar tus resultados.</p>
+                <p>Puedes consultar tus resultados publicados.</p>
 
-                <a th:href="@{'/upload/' + ${userId}}">
-                    <button type="button">Realizar un análisis</button>
+                <a th:href="@{/paciente/results}">
+                    <button type="button">Ver mis resultados</button>
                 </a>
-
-                <a th:href="@{'/upload/' + ${userId} + '/history'}">
-                    <button type="button">Ver mis consultas</button>
-                </a>
-
             </div>
 
-            <div sec:authorize="hasRole('ADMIN')">
-                <h3>Panel de administración</h3>
+            <!-- MÉDICO -->
+            <div sec:authorize="hasRole('MEDICO')">
+                <h3>Zona de médico</h3>
+                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
+                <p>Puedes consultar tus pacientes asignados y subir radiografías.</p>
+
+                <a th:href="@{/medico/patients}">
+                    <button type="button">Ir a mis pacientes</button>
+                </a>
+            </div>
+
+            <!-- ADMIN HOSPITAL -->
+            <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                <h3>Administración del hospital</h3>
+                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
+                <p>Desde aquí puedes dar de alta pacientes y asignarlos a médicos.</p>
+
+                <a th:href="@{/admin-hospital/patients/new}">
+                    <button type="button">Crear paciente</button>
+                </a>
+
+                <a th:href="@{/admin-hospital/assignments/new}">
+                    <button type="button">Asignar médico/paciente</button>
+                </a>
+            </div>
+
+            <!-- ADMIN IT -->
+            <div sec:authorize="hasRole('ADMIN_IT')">
+                <h3>Panel de administración IT</h3>
                 <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
                 <p>Aquí puedes gestionar usuarios, ver estadísticas y administrar el sistema.</p>
+
                 <a th:href="@{/admin/dashboard}">
-                    <button>Ir al panel de administrador</button>
+                    <button type="button">Ir al panel de administrador IT</button>
                 </a>
             </div>
         </div>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Asignar médico y paciente</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+
+<body>
+
+    <h2>Asignación Médico ↔ Paciente (Admin Hospital)</h2>
+
+    <div th:if="${error}" style="color:red;">
+        <p th:text="${error}"></p>
+    </div>
+
+    <div th:if="${success}" style="color:green;">
+        <p th:text="${success}"></p>
+    </div>
+
+    <form th:action="@{/admin-hospital/assignments}" method="post">
+
+        <div>
+            <label>Médico:</label>
+            <select name="doctorId" required>
+                <option value="" selected disabled>Selecciona un médico</option>
+                <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.name + ' (' + d.email + ')'}"></option>
+            </select>
+        </div>
+
+        <div>
+            <label>Paciente:</label>
+            <select name="patientId" required>
+                <option value="" selected disabled>Selecciona un paciente</option>
+                <option th:each="p : ${patients}" th:value="${p.id}" th:text="${p.name + ' (' + p.email + ')'}">
+                </option>
+            </select>
+        </div>
+
+        <button type="submit">Asignar</button>
+    </form>
+
+    <p>
+        <a th:href="@{/admin-hospital/patients/new}">Alta de paciente</a>
+    </p>
+
+</body>
+
+</html>

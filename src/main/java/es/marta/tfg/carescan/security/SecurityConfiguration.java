@@ -90,6 +90,7 @@ public class SecurityConfiguration {
                 .requestMatchers("/admin/**").hasRole("ADMIN_IT")
                 .requestMatchers("/admin-hospital/**").hasRole("ADMIN_HOSPITAL")
                 .requestMatchers("/medico/**").hasRole("MEDICO")
+                .requestMatchers("/css/**").permitAll()
                 .requestMatchers("/paciente/**").hasRole("PACIENTE")
                 .requestMatchers("/upload/**", "/results", "/home", "/user/**")
                 .hasAnyRole("MEDICO", "PACIENTE")

@@ -8,20 +8,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import es.marta.tfg.carescan.DTO.signUp;
-import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
 
 @Controller
 public class GeneralController {
@@ -56,34 +51,27 @@ public class GeneralController {
     //     }
     //     return "signUp";
     // }
-
-   
     // @PostMapping("/signUp")
     // public String procesarRegistro(
     //         @Valid @ModelAttribute("form") signUp form,
     //         BindingResult binding,
     //         RedirectAttributes ra) {
-
     //     if (userRepository.existsByEmail(form.getEmail())) {
     //         binding.rejectValue("email", "exists", "Ya existe una cuenta con este email");
     //     }
-
     //     if (binding.hasErrors()) {
     //         ra.addFlashAttribute("org.springframework.validation.BindingResult.form", binding);
     //         ra.addFlashAttribute("form", form);
     //         return "redirect:/signUp";
     //     }
-
     //     User newUser = new User();
     //     newUser.setName(form.getName());
     //     newUser.setEmail(form.getEmail());
     //     newUser.setPassword(passwordEncoder.encode(form.getPassword()));
     //     newUser.setRole(Role.USER);
     //     userRepository.save(newUser);
-
     //     return "redirect:/login";
     // }
-
     @GetMapping("/{id}/home")
     public String userHome(@PathVariable Long id,
             Authentication authentication,
@@ -101,6 +89,7 @@ public class GeneralController {
         model.addAttribute("username", currentUser.get().getName());
         model.addAttribute("roles", authentication.getAuthorities());
         model.addAttribute("userId", id);
+        model.addAttribute("role", currentUser.get().getRole().name());
 
         return "home";
     }
@@ -155,9 +144,9 @@ public class GeneralController {
             return "redirect:/" + id + "/settings";
         }
 
-        if (newPassword.length() < 8) {
+        if (!newPassword.matches("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$")) {
             ra.addFlashAttribute("passwordError",
-                    "La nueva contraseña debe tener al menos 8 caracteres.");
+                    "La contraseña debe tener al menos 8 caracteres, incluir letras y números.");
             return "redirect:/" + id + "/settings";
         }
 

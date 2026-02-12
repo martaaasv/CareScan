@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.UserRepository;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -19,19 +20,22 @@ public class CustomLogin implements AuthenticationSuccessHandler {
     private UserRepository userRepository;
 
     @Override
-    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException {
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException, ServletException {
 
-        User user = userRepository.findByEmail(authentication.getName()).orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + authentication.getName()));
+        String email = authentication.getName();
 
-        if(user.isTemporalPassword()){
-            response.sendRedirect("/" + user.getId() + "/change-password");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + email));
+
+        Long userId = user.getId();
+
+        if (user.isTemporalPassword()) {
+            response.sendRedirect("/" + userId + "/settings");
             return;
-        } else {
-            response.sendRedirect("/home");
-
         }
-        
+
+        response.sendRedirect("/" + userId + "/home");
     }
 }
-
