@@ -1,9 +1,18 @@
+error id: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java
+file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java
+### com.thoughtworks.qdox.parser.ParseException: syntax error @[41,5]
+
+error in qdox parser
+file content:
+```java
+offset: 1365
+uri: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java
+text:
+```scala
 package es.marta.tfg.carescan.controller;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -18,13 +27,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import es.marta.tfg.carescan.model.AnalisisIA;
 import es.marta.tfg.carescan.model.Consulta;
-import es.marta.tfg.carescan.model.DoctorPatientAssignment;
-import es.marta.tfg.carescan.model.Estado;
 import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.AnalisisIARepository;
 import es.marta.tfg.carescan.repository.ConsultaRepository;
-import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
 import es.marta.tfg.carescan.repository.UserRepository;
 
 @Controller
@@ -41,9 +47,9 @@ public class MedicoController {
     private AnalisisIARepository analisisIARepository;
 
     @Autowired
-    private DoctorPatientAssignmentRepository assignmentRepository;
+    priva
 
-    @GetMapping("/patients")
+    @@@GetMapping("/patients")
     public String patientList(Model model, Authentication auth) {
 
         if (auth == null) {
@@ -55,15 +61,9 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
-        List<DoctorPatientAssignment> assignments = assignmentRepository.findByDoctorAndActiveTrue(doctor);
-
-        List<User> patients = assignments.stream()
-                .map(DoctorPatientAssignment::getPatient)
-                .toList();
-
         model.addAttribute("userId", doctor.getId());
         model.addAttribute("username", doctor.getName());
-        model.addAttribute("patients", patients);
+        model.addAttribute("patients", doctor.getPatients());
 
         return "medico/patientList";
     }
@@ -86,11 +86,7 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
-        if (patient.getEstado() == Estado.INACTIVO) {
-            return "redirect:/access-denied";
-        }
-
-        if (!assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+        if (!doctor.getPatients().contains(patient)) {
             return "redirect:/access-denied";
         }
 
@@ -212,3 +208,42 @@ public class MedicoController {
     }
 
 }
+
+```
+
+```
+
+
+
+#### Error stacktrace:
+
+```
+com.thoughtworks.qdox.parser.impl.Parser.yyerror(Parser.java:2025)
+	com.thoughtworks.qdox.parser.impl.Parser.yyparse(Parser.java:2147)
+	com.thoughtworks.qdox.parser.impl.Parser.parse(Parser.java:2006)
+	com.thoughtworks.qdox.library.SourceLibrary.parse(SourceLibrary.java:232)
+	com.thoughtworks.qdox.library.SourceLibrary.parse(SourceLibrary.java:190)
+	com.thoughtworks.qdox.library.SourceLibrary.addSource(SourceLibrary.java:94)
+	com.thoughtworks.qdox.library.SourceLibrary.addSource(SourceLibrary.java:89)
+	com.thoughtworks.qdox.library.SortedClassLibraryBuilder.addSource(SortedClassLibraryBuilder.java:162)
+	com.thoughtworks.qdox.JavaProjectBuilder.addSource(JavaProjectBuilder.java:174)
+	scala.meta.internal.mtags.JavaMtags.indexRoot(JavaMtags.scala:49)
+	scala.meta.internal.metals.SemanticdbDefinition$.foreachWithReturnMtags(SemanticdbDefinition.scala:99)
+	scala.meta.internal.metals.Indexer.indexSourceFile(Indexer.scala:560)
+	scala.meta.internal.metals.Indexer.$anonfun$reindexWorkspaceSources$3(Indexer.scala:691)
+	scala.meta.internal.metals.Indexer.$anonfun$reindexWorkspaceSources$3$adapted(Indexer.scala:688)
+	scala.collection.IterableOnceOps.foreach(IterableOnce.scala:630)
+	scala.collection.IterableOnceOps.foreach$(IterableOnce.scala:628)
+	scala.collection.AbstractIterator.foreach(Iterator.scala:1313)
+	scala.meta.internal.metals.Indexer.reindexWorkspaceSources(Indexer.scala:688)
+	scala.meta.internal.metals.MetalsLspService.$anonfun$onChange$2(MetalsLspService.scala:936)
+	scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	scala.concurrent.Future$.$anonfun$apply$1(Future.scala:691)
+	scala.concurrent.impl.Promise$Transformation.run(Promise.scala:500)
+	java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	java.base/java.lang.Thread.run(Thread.java:1575)
+```
+#### Short summary: 
+
+QDox parse error in file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java

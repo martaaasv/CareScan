@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de pacientes</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">CareScan</div>
+
+        <nav class="main-nav">
+
+            <div class="nav-right">
+
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}">Saber más</a>
+                </div>
+
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <button type="button" class="user-menu-toggle">
+                        <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
+                        <span class="user-name" th:text="${username}">Usuario</span>
+                    </button>
+
+                    <div class="user-menu-dropdown">
+
+                        <!-- Links comunes a cualquier usuario autenticado -->
+                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
+
+                        <!-- ADMIN IT -->
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}">Panel de administración IT</a>
+                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                        </div>
+
+                        <!-- ADMIN HOSPITAL -->
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients/new}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}">Asignar médico/paciente</a>
+                        </div>
+
+                        <!-- MÉDICO -->
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}">Mis pacientes</a>
+                        </div>
+
+                        <!-- PACIENTE -->
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}">Mis resultados</a>
+                        </div>
+
+                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                    </div>
+                </div>
+        </nav>
+    </header>
+    <main>
+        <div class="container">
+            <h2>Gestión de pacientes</h2>
+
+            <p th:if="${error}" style="color:red;" th:text="${error}"></p>
+            <p th:if="${success}" style="color:green;" th:text="${success}"></p>
+
+            <table class="tableFullWidth">
+                <thead>
+                    <tr>
+                        <th>Paciente</th>
+                        <th>Email</th>
+                        <th>Estado</th>
+                        <th>Médico asignado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${patients}">
+                        <td th:text="${p.name}">Nombre</td>
+                        <td th:text="${p.email}">Email</td>
+                        <td>
+                            <span
+                                th:if="${p.estado == null or p.estado == T(es.marta.tfg.carescan.model.Estado).ESPERANDO_ASIGNACION}"
+                                class="statusBadge statusWaiting">ESPERANDO ASIGNACIÓN</span>
+
+                            <span
+                                th:if="${p.estado != null and p.estado == T(es.marta.tfg.carescan.model.Estado).ACTIVO}"
+                                class="statusBadge statusActive">ACTIVO</span>
+
+                            <span
+                                th:if="${p.estado != null and p.estado == T(es.marta.tfg.carescan.model.Estado).INACTIVO}"
+                                class="statusBadge statusInactive">INACTIVO</span>
+                        </td>
+
+
+
+                        <td th:text="${patientDoctorMap[p.id] != null ? patientDoctorMap[p.id] : 'Sin asignar'}">Sin
+                            asignar</td>
+
+                        <td>
+                            <div class="actionButtons">
+
+                                <a th:href="@{/admin-hospital/patients/{id}/changeDoctor(id=${p.id})}"
+                                    th:classappend="${!p.active} ? 'btnDisabled' : ''">
+                                    <button type="button" class="btnAction btnGreen" th:disabled="${!p.active}">
+                                        Cambiar médico
+                                    </button>
+                                </a>
+
+                                <form th:action="@{/admin-hospital/patients/{id}/deactivate(id=${p.id})}" method="post"
+                                    style="margin:0;">
+                                    <button type="submit" class="btnAction btnRed" th:disabled="${!p.active}">
+                                        Dar de baja
+                                    </button>
+                                </form>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+
+            <br>
+            <a th:href="@{'/' + ${userId} + '/home'}"><button type="button">Volver</button></a>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

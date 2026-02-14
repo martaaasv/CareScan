@@ -37,6 +37,9 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    private Estado estado;
+
     @ManyToMany
     @JoinTable( // Pacientes de un médico
             name = "doctorPatient",
@@ -44,6 +47,9 @@ public class User {
             inverseJoinColumns = @JoinColumn(name = "patientId")
     )
     private Set<User> patients = new HashSet<>();
+
+    @Column(nullable = false)
+    private boolean active = true;
 
     @ManyToMany(mappedBy = "patients") // Médicos de un paciente
     private Set<User> doctors = new HashSet<>();
@@ -126,6 +132,23 @@ public class User {
 
     public void setDoctors(Set<User> doctors) {
         this.doctors = doctors;
+    }
+
+    
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public Estado getEstado() {
+        return estado;
+    }
+
+    public void setEstado(Estado estado) {
+        this.estado = estado;
     }
 
 }

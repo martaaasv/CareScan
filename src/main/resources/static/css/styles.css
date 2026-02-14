@@ -886,3 +886,212 @@ main.settings-main {
 .btn-cancel:hover {
     background: #5a6268;
 }
+
+/* ===== TABLAS (ADMIN HOSPITAL) ===== */
+.tableFullWidth {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+.tableFullWidth th,
+.tableFullWidth td {
+    padding: 12px 14px;
+    border: 1px solid #e5e5e5;
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* Cabecera verde */
+.tableFullWidth thead th {
+    background: #1f8f4a;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Celdas blancas */
+.tableFullWidth tbody td {
+    background: #ffffff;
+}
+
+/* Etiquetas ACTIVO/INACTIVO */
+.statusBadge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+.statusActive {
+    background: #1f8f4a;
+}
+
+.statusInactive {
+    background: #f2b705;
+}
+
+/* Botones acciones */
+.actionButtons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.btnAction {
+    border: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.btnGreen {
+    background: #1f8f4a;
+}
+
+.btnRed {
+    background: #d64545;
+}
+
+.btnAction:disabled,
+.btnDisabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.statusWaiting {
+    background: #2a74d6;
+}
+
+/*---------------------*/
+
+/* ===== FORMS / CARDS ===== */
+.pageWrapper {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+}
+
+.card {
+    width: 100%;
+    max-width: 780px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    padding: 28px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.cardTitle {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.cardSubtitle {
+    margin: 6px 0 0 0;
+    opacity: 0.75;
+    font-size: 14px;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.formRow label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.formRow input,
+.formRow select {
+    width: 100%;
+    padding: 12px 12px;
+    border-radius: 10px;
+    border: 1px solid #dcdcdc;
+    outline: none;
+    font-size: 15px;
+}
+
+.formRow input:focus,
+.formRow select:focus {
+    border-color: #1f8f4a;
+    box-shadow: 0 0 0 3px rgba(31,143,74,0.15);
+}
+
+.cardActions {
+    display: flex;
+    gap: 12px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.btnPrimary {
+    background: #1f8f4a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btnSecondary {
+    background: #1f8f4a;
+    border: 1px solid #dcdcdc;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.btnPrimary:hover { filter: brightness(0.95); }
+.btnSecondary:hover { background: #f6f6f6; }
+
+.alert {
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    border: 1px solid transparent;
+    font-weight: 600;
+}
+
+.alertSuccess {
+    background: rgba(31,143,74,0.10);
+    border-color: rgba(31,143,74,0.25);
+}
+
+.alertError {
+    background: rgba(214,69,69,0.12);
+    border-color: rgba(214,69,69,0.25);
+}
+
+.infoBox {
+    border-radius: 12px;
+    padding: 14px;
+    border: 1px dashed rgba(0,0,0,0.18);
+    background: rgba(0,0,0,0.03);
+    margin-top: 14px;
+}
+
+.mutedSmall {
+    opacity: 0.75;
+    font-size: 13px;
+}

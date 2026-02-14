@@ -1,3 +1,14 @@
+error id: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java:_empty_/DoctorPatientAssignmentRepository#existsByDoctorAndPatientAndActiveTrue#
+file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java
+empty definition using pc, found symbol in pc: _empty_/DoctorPatientAssignmentRepository#existsByDoctorAndPatientAndActiveTrue#
+empty definition using semanticdb
+empty definition using fallback
+non-local guesses:
+
+offset: 3330
+uri: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/MedicoController.java
+text:
+```scala
 package es.marta.tfg.carescan.controller;
 
 import java.io.IOException;
@@ -19,7 +30,6 @@ import org.springframework.web.multipart.MultipartFile;
 import es.marta.tfg.carescan.model.AnalisisIA;
 import es.marta.tfg.carescan.model.Consulta;
 import es.marta.tfg.carescan.model.DoctorPatientAssignment;
-import es.marta.tfg.carescan.model.Estado;
 import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.AnalisisIARepository;
@@ -90,7 +100,7 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
-        if (!assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+        if (!assignmentRepository.existsByDoctorAndPat@@ientAndActiveTrue(doctor, patient)) {
             return "redirect:/access-denied";
         }
 
@@ -212,3 +222,10 @@ public class MedicoController {
     }
 
 }
+
+```
+
+
+#### Short summary: 
+
+empty definition using pc, found symbol in pc: _empty_/DoctorPatientAssignmentRepository#existsByDoctorAndPatientAndActiveTrue#

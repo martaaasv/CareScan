@@ -1,49 +1,117 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asignar médico y paciente</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
 <body>
 
-    <h2>Asignación Médico ↔ Paciente (Admin Hospital)</h2>
+    <header>
+        <div class="logo">CareScan</div>
 
-    <div th:if="${error}" style="color:red;">
-        <p th:text="${error}"></p>
-    </div>
+        <nav class="main-nav">
+            <div class="nav-right">
 
-    <div th:if="${success}" style="color:green;">
-        <p th:text="${success}"></p>
-    </div>
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}">Saber más</a>
+                </div>
 
-    <form th:action="@{/admin-hospital/assignments}" method="post">
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <button type="button" class="user-menu-toggle">
+                        <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
+                        <span class="user-name" th:text="${username}">Usuario</span>
+                    </button>
 
-        <div>
-            <label>Médico:</label>
-            <select name="doctorId" required>
-                <option value="" selected disabled>Selecciona un médico</option>
-                <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.name + ' (' + d.email + ')'}"></option>
-            </select>
-        </div>
+                    <div class="user-menu-dropdown">
 
-        <div>
-            <label>Paciente:</label>
-            <select name="patientId" required>
-                <option value="" selected disabled>Selecciona un paciente</option>
-                <option th:each="p : ${patients}" th:value="${p.id}" th:text="${p.name + ' (' + p.email + ')'}">
-                </option>
-            </select>
-        </div>
+                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
 
-        <button type="submit">Asignar</button>
-    </form>
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}">Panel de administración IT</a>
+                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                        </div>
 
-    <p>
-        <a th:href="@{/admin-hospital/patients/new}">Alta de paciente</a>
-    </p>
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients}">Gestionar pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}">Asignar médico/paciente</a>
+                        </div>
+
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}">Mis pacientes</a>
+                        </div>
+
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}">Mis resultados</a>
+                        </div>
+
+                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                    </div>
+                </div>
+
+            </div>
+        </nav>
+    </header>
+
+    <main class="pageWrapper">
+        <section class="card">
+
+            <div class="cardHeader">
+                <div>
+                    <h2 class="cardTitle">Asignar médico ↔ paciente</h2>
+                    <p class="cardSubtitle">Selecciona un médico y un paciente para crear una asignación activa.</p>
+                </div>
+            </div>
+
+            <div th:if="${error}" class="alert alertError">
+                <span th:text="${error}"></span>
+            </div>
+
+            <div th:if="${success}" class="alert alertSuccess">
+                <span th:text="${success}"></span>
+            </div>
+
+            <form th:action="@{/admin-hospital/assignments}" method="post" class="formGrid">
+
+                <div class="formRow">
+                    <label for="doctorId">Médico</label>
+                    <select id="doctorId" name="doctorId" required>
+                        <option value="" selected disabled>Selecciona un médico</option>
+                        <option th:each="d : ${doctors}" th:value="${d.id}"
+                            th:text="${d.name + ' (' + d.email + ')'}"></option>
+                    </select>
+                </div>
+
+                <div class="formRow">
+                    <label for="patientId">Paciente</label>
+                    <select id="patientId" name="patientId" required>
+                        <option value="" selected disabled>Selecciona un paciente</option>
+                        <option th:each="p : ${patients}" th:value="${p.id}"
+                            th:text="${p.name + ' (' + p.email + ')'}"></option>
+                    </select>
+                </div>
+
+                <div class="cardActions">
+                    <button type="submit" class="btnPrimary">Asignar</button>
+
+                    <a th:href="@{/admin-hospital/patients}" style="text-decoration:none;">
+                        <button type="button" class="btnSecondary">Volver</button>
+                    </a>
+                </div>
+
+            </form>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 CareScan - TFG Marta</p>
+    </footer>
 
 </body>
 

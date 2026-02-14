@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambiar médico</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" />
+</head>
+
+<body>
+
+    <main>
+        <div class="container">
+            <h2>Cambiar médico</h2>
+
+            <p><b>Paciente:</b> <span th:text="${patient.name}"></span></p>
+            <p><b>Email:</b> <span th:text="${patient.email}"></span></p>
+
+            <form th:action="@{/admin-hospital/patients/{id}/changeDoctor(id=${patient.id})}" method="post">
+                <label>Médico:</label>
+                <select name="doctorId" required>
+                    <option value="" disabled selected>Selecciona un médico</option>
+                    <option th:each="d : ${doctors}" th:value="${d.id}" th:text="${d.name + ' (' + d.email + ')'}">
+                    </option>
+                </select>
+
+                <br><br>
+                <button type="submit">Guardar</button>
+            </form>
+
+            <br>
+            <a th:href="@{/admin-hospital/patients}"><button type="button">Volver</button></a>
+        </div>
+    </main>
+
+</body>
+
+</html>

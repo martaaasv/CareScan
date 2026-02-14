@@ -8,7 +8,7 @@
 </head>
 
 <body>
-      <header>
+    <header>
         <div class="logo">CareScan</div>
 
         <nav class="main-nav">
@@ -32,7 +32,7 @@
                             <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
                             <a th:href="@{/admin/dashboard}">Panel de administración</a>
                             <a th:href="@{/admin/users}">Gestión de usuarios</a>
-                           <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                            <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
                         </div>
 
                         <div sec:authorize="hasRole('USER')">
@@ -63,21 +63,30 @@
                 <tr>
                     <th>Nombre</th>
                     <th>Email</th>
+                    <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="p : ${patients}">
-                    <td th:text="${p.name}"></td>
-                    <td th:text="${p.email}"></td>
+                    <td th:text="${p.name}">Nombre</td>
+                    <td th:text="${p.email}">Email</td>
 
                     <td>
-                        <a th:href="@{/medico/patients/{id}/upload(id=${p.id})}">
-                            Subir radiografía
-                        </a>
+                        <span th:text="${p.active ? 'ACTIVO' : 'INACTIVO'}">ACTIVO</span>
                     </td>
 
+                    <td>
+                        <a th:if="${p.active}" th:href="@{/medico/patients/{id}/upload(id=${p.id})}">
+                            Subir radiografía
+                        </a>
+
+                        <span th:if="${!p.active}">
+                            No disponible (paciente inactivo)
+                        </span>
+                    </td>
                 </tr>
+
             </tbody>
         </table>
     </div>

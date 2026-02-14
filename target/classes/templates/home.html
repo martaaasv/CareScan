@@ -99,13 +99,7 @@
                 <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
                 <p>Desde aquí puedes dar de alta pacientes y asignarlos a médicos.</p>
 
-                <a th:href="@{/admin-hospital/patients/new}">
-                    <button type="button">Crear paciente</button>
-                </a>
-
-                <a th:href="@{/admin-hospital/assignments/new}">
-                    <button type="button">Asignar médico/paciente</button>
-                </a>
+                <a th:href="@{/admin-hospital/patients}">Gestionar pacientes</a>
             </div>
 
             <!-- ADMIN IT -->
@@ -125,7 +119,7 @@
         <p>&copy; 2026 CareScan - TFG Marta</p>
     </footer>
 
-     <!-- MODAL DE CONFIRMAR LOGOUT -->
+    <!-- MODAL DE CONFIRMAR LOGOUT -->
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>

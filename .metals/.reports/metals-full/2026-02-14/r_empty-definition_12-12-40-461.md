@@ -1,3 +1,14 @@
+error id: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/AdminHospitalController.java:_empty_/RedirectAttributes#addFlashAttribute#
+file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/AdminHospitalController.java
+empty definition using pc, found symbol in pc: _empty_/RedirectAttributes#addFlashAttribute#
+empty definition using semanticdb
+empty definition using fallback
+non-local guesses:
+
+offset: 10211
+uri: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/controller/AdminHospitalController.java
+text:
+```scala
 package es.marta.tfg.carescan.controller;
 
 import java.security.SecureRandom;
@@ -136,7 +147,7 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/assignments/new";
         }
 
-        if (patient.getEstado() == Estado.INACTIVO) {
+        if (!patient.isActive()) {
             ra.addFlashAttribute("error", "No se puede asignar médico a un paciente INACTIVO.");
             return "redirect:/admin-hospital/assignments/new";
         }
@@ -162,8 +173,6 @@ public class AdminHospitalController {
         newAssign.setPatient(patient);
         newAssign.setStartDate(LocalDateTime.now());
         newAssign.setActive(true);
-        patient.setEstado(Estado.ACTIVO);
-        userRepository.save(patient);
 
         assignmentRepository.save(newAssign);
 
@@ -205,7 +214,7 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/patients";
         }
 
-        patient.setEstado(Estado.INACTIVO);
+        patient.setActive(false);
         userRepository.save(patient);
 
         Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
@@ -257,7 +266,7 @@ public class AdminHospitalController {
         }
 
         if (patient.getEstado() == Estado.INACTIVO) {
-            ra.addFlashAttribute("error", "No se puede asignar médico a un paciente INACTIVO.");
+            ra.addF@@lashAttribute("error", "No se puede asignar médico a un paciente INACTIVO.");
             return "redirect:/admin-hospital/assignments/new";
         }
 
@@ -280,12 +289,18 @@ public class AdminHospitalController {
         newAssign.setPatient(patient);
         newAssign.setStartDate(LocalDateTime.now());
         newAssign.setActive(true);
+
         assignmentRepository.save(newAssign);
-        patient.setEstado(Estado.ACTIVO);
-        userRepository.save(patient);
 
         ra.addFlashAttribute("success", "Médico asignado correctamente.");
         return "redirect:/admin-hospital/patients";
     }
 
 }
+
+```
+
+
+#### Short summary: 
+
+empty definition using pc, found symbol in pc: _empty_/RedirectAttributes#addFlashAttribute#

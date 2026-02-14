@@ -1,50 +1,114 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alta de paciente</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 
 <body>
+    <header>
+        <div class="logo">CareScan</div>
 
-    <h2>Alta de paciente (Admin Hospital)</h2>
+        <nav class="main-nav">
+            <div class="nav-right">
 
-    <div th:if="${username}">
-        <p>Sesión: <b th:text="${username}"></b></p>
-    </div>
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}">Saber más</a>
+                </div>
 
-    <div th:if="${error}" style="color:red;">
-        <p th:text="${error}"></p>
-    </div>
+                <div class="user-menu" sec:authorize="isAuthenticated()">
+                    <button type="button" class="user-menu-toggle">
+                        <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
+                        <span class="user-name" th:text="${username}">Usuario</span>
+                    </button>
 
-    <div th:if="${success}" style="color:green;">
-        <p th:text="${success}"></p>
-    </div>
+                    <div class="user-menu-dropdown">
 
-    <div th:if="${tempPassword}" style="border:1px solid #ccc; padding:10px; margin:10px 0;">
-        <p><b>Email:</b> <span th:text="${createdEmail}"></span></p>
-        <p><b>Contraseña temporal:</b> <span th:text="${tempPassword}"></span></p>
-        <p style="color:#b00;"><b>Cópiala ahora:</b> no se volverá a mostrar.</p>
-    </div>
+                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
+                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
 
-    <form th:action="@{/admin-hospital/patients}" method="post">
-        <div>
-            <label>Nombre:</label>
-            <input type="text" name="name" required>
-        </div>
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}">Panel de administración IT</a>
+                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                        </div>
 
-        <div>
-            <label>Email:</label>
-            <input type="email" name="email" required>
-        </div>
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients}">Gestionar pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}">Asignar médico/paciente</a>
+                        </div>
 
-        <button type="submit">Crear paciente</button>
-    </form>
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}">Mis pacientes</a>
+                        </div>
 
-    <p><a th:href="@{/admin/dashboard}">Volver al panel</a></p>
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}">Mis resultados</a>
+                        </div>
 
+                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                    </div>
+                </div>
+
+            </div>
+        </nav>
+    </header>
+
+    <main class="pageWrapper">
+        <section class="card">
+
+            <div class="cardHeader">
+                <div>
+                    <h2 class="cardTitle">Alta de paciente</h2>
+                    <p class="cardSubtitle">Crea un paciente y genera una contraseña temporal para el primer acceso.</p>
+                </div>
+            </div>
+
+            <div th:if="${error}" class="alert alertError">
+                <span th:text="${error}"></span>
+            </div>
+
+            <div th:if="${success}" class="alert alertSuccess">
+                <span th:text="${success}"></span>
+            </div>
+
+            <div th:if="${tempPassword}" class="infoBox">
+                <p><b>Email:</b> <span th:text="${createdEmail}"></span></p>
+                <p><b>Contraseña temporal:</b> <span th:text="${tempPassword}"></span></p>
+                <p class="mutedSmall"><b>⚠ Cópiala ahora:</b> no se volverá a mostrar.</p>
+            </div>
+
+            <form th:action="@{/admin-hospital/patients}" method="post" class="formGrid" autocomplete="off">
+
+                <div class="formRow">
+                    <label for="name">Nombre</label>
+                    <input id="name" type="text" name="name" required placeholder="Ej: Pedro Gómez">
+                </div>
+
+                <div class="formRow">
+                    <label for="email">Email</label>
+                    <input id="email" type="email" name="email" required placeholder="Ej: paciente@correo.com">
+                </div>
+
+                <div class="cardActions">
+                    <button type="submit" class="btnPrimary">Crear paciente</button>
+                    <a th:href="@{/admin-hospital/patients}" style="text-decoration:none;">
+                        <button type="button" class="btnSecondary">Volver</button>
+                    </a>
+                </div>
+            </form>
+
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 CareScan - TFG Marta</p>
+    </footer>
+
+    <!-- Si ya tienes modal logout en otros HTML, puedes pegarlo aquí igual -->
 </body>
 
 </html>
