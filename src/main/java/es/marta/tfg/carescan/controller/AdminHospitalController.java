@@ -25,6 +25,7 @@ import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
 import es.marta.tfg.carescan.repository.UserRepository;
+import es.marta.tfg.carescan.service.HardDeleteUserService;
 
 @Controller
 @RequestMapping("/admin-hospital")
@@ -38,6 +39,13 @@ public class AdminHospitalController {
 
     @Autowired
     private DoctorPatientAssignmentRepository assignmentRepository;
+
+
+    private boolean isSelectablePatient(User u) {
+        return u != null
+                && u.getRole() == Role.PACIENTE
+                && u.getEstado() != Estado.INACTIVO;
+    }
 
     @GetMapping("/patients/new")
     public String newPatientForm(Model model, Authentication auth) {
@@ -93,12 +101,20 @@ public class AdminHospitalController {
         return sb.toString();
     }
 
-    // para asignar médicos a pacientes 
+    // --------------------------
+    // FORM ASIGNAR MEDICO A PACIENTE
+    // (aquí el desplegable: NO INACTIVOS)
+    // --------------------------
     @GetMapping("/assignments/new")
     public String newAssignmentForm(Model model, Authentication auth) {
 
         List<User> doctors = userRepository.findAllByRole(Role.MEDICO);
-        List<User> patients = userRepository.findAllByRole(Role.PACIENTE);
+
+        // SOLO pacientes NO INACTIVOS (para el desplegable)
+        List<User> patients = userRepository.findAllByRole(Role.PACIENTE)
+                .stream()
+                .filter(this::isSelectablePatient)
+                .toList();
 
         model.addAttribute("doctors", doctors);
         model.addAttribute("patients", patients);
@@ -136,6 +152,7 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/assignments/new";
         }
 
+        // BLOQUEO REAL: paciente inactivo no se asigna nunca
         if (patient.getEstado() == Estado.INACTIVO) {
             ra.addFlashAttribute("error", "No se puede asignar médico a un paciente INACTIVO.");
             return "redirect:/admin-hospital/assignments/new";
@@ -162,6 +179,8 @@ public class AdminHospitalController {
         newAssign.setPatient(patient);
         newAssign.setStartDate(LocalDateTime.now());
         newAssign.setActive(true);
+
+        // si se asigna, pasa a activo
         patient.setEstado(Estado.ACTIVO);
         userRepository.save(patient);
 
@@ -171,7 +190,9 @@ public class AdminHospitalController {
         return "redirect:/admin-hospital/assignments/new";
     }
 
-    // PARA LA TABA DE ADMIN H
+    // --------------------------
+    // TABLA GESTIÓN PACIENTES
+    // --------------------------
     @GetMapping("/patients")
     public String patientManagement(Model model, Authentication auth) {
 
@@ -183,6 +204,7 @@ public class AdminHospitalController {
         }
 
         List<User> patients = userRepository.findAllByRole(Role.PACIENTE);
+
         List<DoctorPatientAssignment> activeAssignments = assignmentRepository.findByPatientInAndActiveTrue(patients);
 
         Map<Long, String> patientDoctorMap = new HashMap<>();
@@ -205,9 +227,16 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/patients";
         }
 
+        // Si ya está inactivo, no repetir acción
+        if (patient.getEstado() == Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "El paciente ya está INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
         patient.setEstado(Estado.INACTIVO);
         userRepository.save(patient);
 
+        // cerrar asignación activa si existe
         Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
         if (activeAssignmentOpt.isPresent()) {
             DoctorPatientAssignment a = activeAssignmentOpt.get();
@@ -221,10 +250,18 @@ public class AdminHospitalController {
     }
 
     @GetMapping("/patients/{patientId}/changeDoctor")
-    public String changeDoctorForm(@PathVariable Long patientId, Model model, Authentication auth) {
+    public String changeDoctorForm(@PathVariable Long patientId, Model model, Authentication auth, RedirectAttributes ra) {
 
         User patient = userRepository.findById(patientId).orElse(null);
+
         if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        // BLOQUEO REAL: si está inactivo, no se puede cambiar médico
+        if (patient.getEstado() == Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "No se puede cambiar el médico de un paciente INACTIVO.");
             return "redirect:/admin-hospital/patients";
         }
 
@@ -249,18 +286,19 @@ public class AdminHospitalController {
             RedirectAttributes ra) {
 
         User patient = userRepository.findById(patientId).orElse(null);
-        User doctor = userRepository.findById(doctorId).orElse(null);
 
         if (patient == null || patient.getRole() != Role.PACIENTE) {
             ra.addFlashAttribute("error", "Paciente no encontrado.");
             return "redirect:/admin-hospital/patients";
         }
 
+        // BLOQUEO REAL: si está inactivo, no se cambia médico
         if (patient.getEstado() == Estado.INACTIVO) {
-            ra.addFlashAttribute("error", "No se puede asignar médico a un paciente INACTIVO.");
-            return "redirect:/admin-hospital/assignments/new";
+            ra.addFlashAttribute("error", "No se puede cambiar el médico de un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
         }
 
+        User doctor = userRepository.findById(doctorId).orElse(null);
         if (doctor == null || doctor.getRole() != Role.MEDICO) {
             ra.addFlashAttribute("error", "Médico no encontrado.");
             return "redirect:/admin-hospital/patients/" + patientId + "/changeDoctor";
@@ -274,7 +312,6 @@ public class AdminHospitalController {
             assignmentRepository.save(a);
         }
 
-        // Crear nueva asignación
         DoctorPatientAssignment newAssign = new DoctorPatientAssignment();
         newAssign.setDoctor(doctor);
         newAssign.setPatient(patient);
@@ -288,4 +325,5 @@ public class AdminHospitalController {
         return "redirect:/admin-hospital/patients";
     }
 
+    
 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareScan - Error</title>
+    <title th:text="#{title.error}">CareScan - Error</title>
     <style>
         /* Estilos generales */
         * {
@@ -112,20 +112,32 @@
     <div class="logo">CareScan</div>
     <nav>
         <ul>
-            <li><a href="/">Inicio</a></li>
-            <li><a href="/login">Iniciar sesión</a></li>
-            <li><a href="/signUp">Registrarse</a></li>
+            <li><a href="/" th:text="#{nav.home}">Inicio</a></li>
+            <li><a href="/login" th:text="#{home.login.button}">Iniciar sesion</a></li>
+            <li><a href="/signUp" th:text="#{signup.submit}">Crear cuenta</a></li>
         </ul>
+        <div class="lang-switcher">
+            <form method="get">
+                <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
+                <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
+                    <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
+                    <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
+                    <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
+                    <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
+                    <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
+                </select>
+            </form>
+        </div>
     </nav>
 </header>
 
 <main>
-    <h1>¡Vaya!</h1>
-    <h2>Ha ocurrido un error inesperado</h2>
-    <p>Lo sentimos, pero algo salió mal al procesar tu solicitud.<br>
-    Puedes volver al inicio o intentar de nuevo más tarde.</p>
+    <h1 th:text="#{error.oops}">Vaya!</h1>
+    <h2 th:text="#{error.unexpected}">Ha ocurrido un error inesperado</h2>
+    <p><span th:text="#{error.message.line1}">Lo sentimos, pero algo salio mal al procesar tu solicitud.</span><br>
+    <span th:text="#{error.message.line2}">Puedes volver al inicio o intentar de nuevo mas tarde.</span></p>
 
-    <a href="/" class="btn">Volver al inicio</a>
+    <a href="/" class="btn" th:text="#{error.back.home}">Volver al inicio</a>
 </main>
 
 <footer>

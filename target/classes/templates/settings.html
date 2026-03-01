@@ -4,37 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareScan - Configuración de cuenta</title>
+    <title th:text="#{title.settings}">CareScan - Configuracion de cuenta</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
 <body>
-    <header>
-        <div class="logo">CareScan</div>
+   
+    header>
+        <div class="logo">Care<span style="color:var(--green-500)">Scan</span></div>
 
         <nav class="main-nav">
-
             <div class="nav-right">
-
-                <div sec:authorize="isAnonymous()">
-                    <a th:href="@{/upload}">Ver demostración</a>
-                    <a th:href="@{/about}">Saber más</a>
-                    <a th:href="@{/login}">Iniciar sesión</a>
-                    <a th:href="@{/signUp}">Registrarse</a>
+                <div class="lang-switcher">
+                    <form method="get">
+                        <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
+                        <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
+                            <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
+                            <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
+                            <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
+                            <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
+                            <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
+                        </select>
+                    </form>
                 </div>
-
-
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
+                </div>
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
                         <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
-
                     <div class="user-menu-dropdown">
-                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-                        <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a th:href="@{'/' + ${userId} + '/home'}" th:text="#{nav.home}">Inicio</a>
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
+                            <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
+                        </div>
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar medico/paciente</a>
+                        </div>
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}" th:text="#{nav.my.patients}">Mis pacientes</a>
+                        </div>
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}" th:text="#{nav.my.results}">Mis resultados</a>
+                        </div>
+                        <a href="#" onclick="openLogoutModal()" th:text="#{nav.logout}">Cerrar sesion</a>
                     </div>
                 </div>
             </div>
@@ -54,18 +72,12 @@
                     </div>
                 </div>
 
-                <nav class="settings-sidebar-nav">
-
-                    <a href="#" class="settings-nav-link active" data-tab-target="security">Seguridad</a>
-                    <a href="#delete-section" class="settings-nav-link danger-link" data-tab-target="delete">Eliminar
-                        cuenta</a>
-                </nav>
             </aside>
 
             <section class="settings-content">
-                <h1 class="settings-title">Configuración de cuenta</h1>
+                <h1 class="settings-title" th:text="#{settings.title}">Configuracion de cuenta</h1>
                 <p class="settings-subtitle">
-                    Gestiona la seguridad de tu cuenta y la contraseña.
+                    <span th:text="#{settings.subtitle}">Gestiona la seguridad de tu cuenta y la contrasena.</span>
                 </p>
 
 
@@ -75,56 +87,38 @@
                     <div th:if="${passwordSuccess}" class="alert alert-success" th:text="${passwordSuccess}"></div>
 
                     <div class="settings-card">
-                        <h2 class="settings-card-title">Seguridad</h2>
+                        <h2 class="settings-card-title" th:text="#{settings.security.title}">Seguridad</h2>
                         <p class="settings-card-description">
-                            Cambia la contraseña que utilizas para iniciar sesión en CareScan.
+                            <span th:text="#{settings.security.desc}">Cambia la contrasena que utilizas para iniciar sesion en CareScan.</span>
                         </p>
 
                         <form th:action="@{'/' + ${userId} + '/change-password'}" method="post">
                             <div class="form-control">
-                                <label for="currentPassword">Contraseña actual</label>
+                                <label for="currentPassword" th:text="#{settings.password.current}">Contrasena actual</label>
                                 <input type="password" id="currentPassword" name="currentPassword" required />
                             </div>
 
                             <div class="form-row">
                                 <div class="form-control">
-                                    <label for="newPassword">Nueva contraseña</label>
+                                    <label for="newPassword" th:text="#{settings.password.new}">Nueva contrasena</label>
                                     <input type="password" id="newPassword" name="newPassword" required />
                                 </div>
 
                                 <div class="form-control">
-                                    <label for="confirmPassword">Confirmar contraseña</label>
+                                    <label for="confirmPassword" th:text="#{settings.password.confirm}">Confirmar contrasena</label>
                                     <input type="password" id="confirmPassword" name="confirmPassword" required />
                                 </div>
                             </div>
 
                             <div class="settings-card-actions">
                                 <button type="submit" class="btn btn-primary">
-                                    Guardar cambios
+                                    <span th:text="#{settings.save}">Guardar cambios</span>
                                 </button>
                             </div>
                         </form>
                     </div>
                 </div>
 
-
-                <div class="settings-tab" data-tab="delete" id="delete-section">
-                    <div th:if="${accountDeleted}" class="alert alert-success" th:text="${accountDeleted}"></div>
-
-                    <div class="settings-card settings-card-danger">
-                        <h2 class="settings-card-title">Eliminar cuenta</h2>
-                        <p class="settings-card-description">
-                            Esta acción es permanente. Se eliminarán tus datos y no podrás recuperar la cuenta.
-                        </p>
-
-                        <form th:action="@{'/' + ${userId} + '/delete-account'}" method="post"
-                            onsubmit="return confirm('¿Seguro que quieres eliminar tu cuenta? Esta acción no se puede deshacer.');">
-                            <button type="submit" class="btn btn-danger">
-                                Eliminar mi cuenta
-                            </button>
-                        </form>
-                    </div>
-                </div>
 
             </section>
         </div>
@@ -171,12 +165,12 @@
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>
-                ¿Seguro que deseas cerrar sesión?<br>
-                Tendrás que volver a iniciar sesión para continuar.
+                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
+                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para continuar.</span>
             </p>
             <div class="modal-buttons">
-                <button type="button" class="btn-confirm" onclick="confirmLogout()">Cerrar sesión</button>
-                <button type="button" class="btn-cancel" onclick="closeLogoutModal()">Cancelar</button>
+                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar sesion</button>
+                <button type="button" class="btn-cancel" onclick="closeLogoutModal()" th:text="#{common.cancel}">Cancelar</button>
             </div>
         </div>
     </div>

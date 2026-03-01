@@ -4,33 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mis consultas</title>
+    <title th:text="#{title.history}">Mis consultas</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
 <body>
+    
     <header>
-        <div class="logo">CareScan</div>
+        <div class="logo">Care<span style="color:var(--green-500)">Scan</span></div>
 
         <nav class="main-nav">
             <div class="nav-right">
-
-                <div sec:authorize="isAnonymous()">
-                    <a th:href="@{/upload}">Ver demostración</a>
-                    <a th:href="@{/about}">Saber más</a>
+                <div class="lang-switcher">
+                    <form method="get">
+                        <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
+                        <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
+                            <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
+                            <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
+                            <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
+                            <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
+                            <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
+                        </select>
+                    </form>
                 </div>
-
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
+                </div>
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
                         <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
-
                     <div class="user-menu-dropdown">
-                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-                        <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a th:href="@{'/' + ${userId} + '/home'}" th:text="#{nav.home}">Inicio</a>
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
+                            <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
+                        </div>
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar medico/paciente</a>
+                        </div>
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}" th:text="#{nav.my.patients}">Mis pacientes</a>
+                        </div>
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}" th:text="#{nav.my.results}">Mis resultados</a>
+                        </div>
+                        <a href="#" onclick="openLogoutModal()" th:text="#{nav.logout}">Cerrar sesion</a>
                     </div>
                 </div>
             </div>
@@ -39,23 +61,23 @@
 
     <main2>
         <div class="container history-page">
-            <h2 class="page-title">Mis consultas</h2>
+            <h2 class="page-title" th:text="#{history.title}">Mis consultas</h2>
 
             <div th:if="${mensajeExito}" class="alert-success" th:text="${mensajeExito}"></div>
             <div th:if="${mensajeError}" class="alert-error" th:text="${mensajeError}"></div>
 
             <div th:if="${#lists.isEmpty(consultas)}" class="empty-state">
-                <p>No hay consultas todavía.</p>
+                <p th:text="#{history.empty}">No hay consultas todavia.</p>
             </div>
 
             <table th:if="${!#lists.isEmpty(consultas)}" class="styled-table">
                 <thead>
                     <tr>
-                        <th>Fecha y hora</th>
-                        <th>Archivo</th>
-                        <th>Resultado</th>
-                        <th>Imagen</th>
-                        <th>Acciones</th>
+                        <th th:text="#{history.date.time}">Fecha y hora</th>
+                        <th th:text="#{common.file}">Archivo</th>
+                        <th th:text="#{common.result}">Resultado</th>
+                        <th th:text="#{common.image}">Imagen</th>
+                        <th th:text="#{common.actions}">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,13 +87,13 @@
                         <td th:text="${c.resultado}">--</td>
                         <td>
                             <a th:href="@{'/upload/consulta/' + ${c.id} + '/imagen'}" target="_blank" rel="noopener">
-                                <img th:src="@{'/upload/consulta/' + ${c.id} + '/imagen'}" alt="Imagen de la consulta"
+                                <img th:src="@{'/upload/consulta/' + ${c.id} + '/imagen'}" th:alt="#{history.image.alt}"
                                     style="max-width: 120px; max-height: 120px; border-radius: 4px;">
                             </a>
                         </td>
                         <td>
                             <button type="button" class="btn-delete-consulta" th:data-id="${c.id}">
-                                Borrar consulta
+                                <span th:text="#{history.delete}">Borrar consulta</span>
                             </button>
                         </td>
                     </tr>
@@ -80,7 +102,7 @@
 
             <div class="actions-bottom">
                 <a th:href="@{'/upload/' + ${userId}}">
-                    <button>Subir nueva imagen</button>
+                    <button th:text="#{history.upload.new}">Subir nueva imagen</button>
                 </a>
             </div>
 
@@ -92,12 +114,12 @@
             <div id="confirmModal" class="modal-overlay">
                 <div class="modal">
                     <p>
-                        ¿Está seguro de querer borrar la consulta?<br>
-                        Esta acción es permanente y no se puede deshacer.
+                        <span th:text="#{history.modal.delete.line1}">Esta seguro de querer borrar la consulta?</span><br>
+                        <span th:text="#{history.modal.delete.line2}">Esta accion es permanente y no se puede deshacer.</span>
                     </p>
                     <div class="modal-buttons">
-                        <button type="button" id="btnAceptar" class="btn-confirm">Aceptar</button>
-                        <button type="button" id="btnCancelar" class="btn-cancel">Cancelar</button>
+                        <button type="button" id="btnAceptar" class="btn-confirm" th:text="#{common.accept}">Aceptar</button>
+                        <button type="button" id="btnCancelar" class="btn-cancel" th:text="#{common.cancel}">Cancelar</button>
                     </div>
                 </div>
             </div>
@@ -151,12 +173,12 @@
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>
-                ¿Seguro que deseas cerrar sesión?<br>
-                Tendrás que volver a iniciar sesión para continuar.
+                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
+                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para continuar.</span>
             </p>
             <div class="modal-buttons">
-                <button type="button" class="btn-confirm" onclick="confirmLogout()">Cerrar sesión</button>
-                <button type="button" class="btn-cancel" onclick="closeLogoutModal()">Cancelar</button>
+                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar sesion</button>
+                <button type="button" class="btn-cancel" onclick="closeLogoutModal()" th:text="#{common.cancel}">Cancelar</button>
             </div>
         </div>
     </div>

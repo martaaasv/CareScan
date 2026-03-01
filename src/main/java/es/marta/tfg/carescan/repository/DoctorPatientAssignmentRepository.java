@@ -21,4 +21,8 @@ public interface DoctorPatientAssignmentRepository extends JpaRepository<DoctorP
     List<DoctorPatientAssignment> findByActiveTrue();
 
     boolean existsByDoctorAndPatientAndActiveTrue(User doctor, User patient);
+
+    void deleteByPatientId(Long patientId);
+
+    void deleteByDoctorId(Long doctorId);
 }

@@ -2,55 +2,65 @@ package es.marta.tfg.carescan.security.jwt;
 
 public class AuthResponse {
 
-	private Status status;
-	private String message;
-	private String error;
+    private Status status;
+    private String message;
+    private String error;
 
-	public enum Status {
-		SUCCESS, FAILURE
-	}
+    private String token;
 
-	public AuthResponse() {
-	}
+    public String getToken() {
+        return token;
+    }
 
-	public AuthResponse(Status status, String message) {
-		this.status = status;
-		this.message = message;
-	}
+    public void setToken(String token) {
+        this.token = token;
+    }
 
-	public AuthResponse(Status status, String message, String error) {
-		this.status = status;
-		this.message = message;
-		this.error = error;
-	}
+    public enum Status {
+        SUCCESS, FAILURE
+    }
 
-	public Status getStatus() {
-		return status;
-	}
+    public AuthResponse() {
+    }
 
-	public void setStatus(Status status) {
-		this.status = status;
-	}
+    public AuthResponse(Status status, String message) {
+        this.status = status;
+        this.message = message;
+    }
 
-	public String getMessage() {
-		return message;
-	}
+    public AuthResponse(Status status, String message, String error) {
+        this.status = status;
+        this.message = message;
+        this.error = error;
+    }
 
-	public void setMessage(String message) {
-		this.message = message;
-	}
+    public Status getStatus() {
+        return status;
+    }
 
-	public String getError() {
-		return error;
-	}
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 
-	public void setError(String error) {
-		this.error = error;
-	}
+    public String getMessage() {
+        return message;
+    }
 
-	@Override
-	public String toString() {
-		return "LoginResponse [status=" + status + ", message=" + message + ", error=" + error + "]";
-	}
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    @Override
+    public String toString() {
+        return "LoginResponse [status=" + status + ", message=" + message + ", error=" + error + "]";
+    }
 
 }

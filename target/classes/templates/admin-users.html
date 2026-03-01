@@ -4,29 +4,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareScan - Gestión de usuarios</title>
+    <title th:text="#{title.admin.users}">CareScan - Gestion de usuarios</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
 <body>
+
     <header>
-        <div class="logo">CareScan</div>
+        <div class="logo">Care<span style="color:var(--green-500)">Scan</span></div>
 
         <nav class="main-nav">
             <div class="nav-right">
+                <div class="lang-switcher">
+                    <form method="get">
+                        <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
+                        <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
+                            <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
+                            <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
+                            <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
+                            <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
+                            <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
+                        </select>
+                    </form>
+                </div>
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
+                </div>
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
                         <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
-
                     <div class="user-menu-dropdown">
-                        <div sec:authorize="hasRole('ADMIN')">
-                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                            <a th:href="@{/admin/dashboard}">Panel de administración</a>
-                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
-                            <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a th:href="@{'/' + ${userId} + '/home'}" th:text="#{nav.home}">Inicio</a>
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
+                            <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
                         </div>
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar medico/paciente</a>
+                        </div>
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}" th:text="#{nav.my.patients}">Mis pacientes</a>
+                        </div>
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}" th:text="#{nav.my.results}">Mis resultados</a>
+                        </div>
+                        <a href="#" onclick="openLogoutModal()" th:text="#{nav.logout}">Cerrar sesion</a>
                     </div>
                 </div>
             </div>
@@ -35,24 +61,24 @@
 
     <main2>
         <div class="container history-page">
-            <h2 class="page-title">Gestión de usuarios</h2>
+            <h2 class="page-title" th:text="#{admin.users.title}">Gestion de usuarios</h2>
 
             <div th:if="${mensajeExito}" class="alert-success" th:text="${mensajeExito}"></div>
             <div th:if="${mensajeError}" class="alert-error" th:text="${mensajeError}"></div>
 
             <div th:if="${#lists.isEmpty(users)}" class="empty-state">
-                <p>No hay usuarios registrados.</p>
+                <p th:text="#{admin.users.empty}">No hay usuarios registrados.</p>
             </div>
 
             <table th:if="${!#lists.isEmpty(users)}" class="styled-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Email</th>
-                        <th>Rol</th>
-                        <th>Nº consultas</th>
-                        <th>Acciones</th>
+                        <th th:text="#{common.name}">Nombre</th>
+                        <th th:text="#{common.email}">Email</th>
+                        <th th:text="#{common.role}">Rol</th>
+                        <th th:text="#{admin.dashboard.consultas.count}">N consultas</th>
+                        <th th:text="#{common.actions}">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,30 +86,36 @@
                         <td th:text="${u.id}">1</td>
                         <td th:text="${u.name}">Nombre</td>
                         <td th:text="${u.email}">email@example.com</td>
-                        <td th:text="${u.role}">USER</td>
+                        <td th:text="${u.role}">ROL</td>
                         <td th:text="${consultasCount[u.id]}">0</td>
                         <td>
                             <form th:action="@{'/admin/users/' + ${u.id} + '/role'}" method="post"
                                 style="display:inline;">
                                 <select name="role">
-                                    <option th:value="${T(es.marta.tfg.carescan.model.Role).USER}"
-                                        th:selected="${u.role == T(es.marta.tfg.carescan.model.Role).USER}">
-                                        USER
+                                    <option th:value="ADMIN_IT" th:selected="${u.role.name() == 'ADMIN_IT'}">
+                                        ADMIN IT
                                     </option>
-                                    <option th:value="${T(es.marta.tfg.carescan.model.Role).ADMIN}"
-                                        th:selected="${u.role == T(es.marta.tfg.carescan.model.Role).ADMIN}">
-                                        ADMIN
+                                    <option th:value="ADMIN_HOSPITAL"
+                                        th:selected="${u.role.name() == 'ADMIN_HOSPITAL'}">
+                                        ADMIN HOSPITAL
+                                    </option>
+                                    <option th:value="MEDICO" th:selected="${u.role.name() == 'MEDICO'}">
+                                        MÉDICO
+                                    </option>
+                                    <option th:value="PACIENTE" th:selected="${u.role.name() == 'PACIENTE'}">
+                                        PACIENTE
                                     </option>
                                 </select>
-                                <button type="submit">Actualizar rol</button>
+                                <button type="submit" th:text="#{admin.users.role.update}">Actualizar rol</button>
                             </form>
-
-
-                            <form th:action="@{'/admin/users/' + ${u.id} + '/delete'}" method="post"
-                                style="display:inline;"
-                                onsubmit="return confirm('¿Seguro que deseas borrar esta cuenta y sus consultas?');">
-                                <button type="submit" class="btn-delete" style="color: red;">Borrar</button>
+                            <form th:action="@{'/admin/users/' + ${u.id} + '/hard-delete'}" method="post"
+                                onsubmit="return confirm('ELIMINAR DEFINITIVAMENTE este usuario borrara TODO lo relacionado (consultas, radiografias, asignaciones). Seguro?');"
+                                style="display:inline;">
+                                <button type="submit" class="btn-delete" style="color:red;">
+                                    <span th:text="#{common.delete}">Eliminar</span>
+                                </button>
                             </form>
+            
                         </td>
                     </tr>
                 </tbody>
@@ -99,12 +131,12 @@
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>
-                ¿Seguro que deseas cerrar sesión?<br>
-                Tendrás que volver a iniciar sesión para continuar.
+                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
+                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para continuar.</span>
             </p>
             <div class="modal-buttons">
-                <button type="button" class="btn-confirm" onclick="confirmLogout()">Cerrar sesión</button>
-                <button type="button" class="btn-cancel" onclick="closeLogoutModal()">Cancelar</button>
+                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar sesion</button>
+                <button type="button" class="btn-cancel" onclick="closeLogoutModal()" th:text="#{common.cancel}">Cancelar</button>
             </div>
         </div>
     </div>
@@ -121,7 +153,6 @@
             window.location.href = "/logout";
         }
 
-        // Cerrar modal haciendo clic fuera
         document.getElementById("logoutModal").addEventListener("click", function (e) {
             if (e.target === this) closeLogoutModal();
         });

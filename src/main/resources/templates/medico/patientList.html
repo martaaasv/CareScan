@@ -3,99 +3,181 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Mis pacientes</title>
+    <title th:text="#{title.medico.patients}">Mis pacientes</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 
 <body>
-    <header>
-        <div class="logo">CareScan</div>
+
+   <header>
+        <div class="logo">Care<span style="color:var(--green-500)">Scan</span></div>
 
         <nav class="main-nav">
-
             <div class="nav-right">
-
-                <div sec:authorize="isAnonymous()">
-                    <a th:href="@{/about}">Saber más</a>
+                <div class="lang-switcher">
+                    <form method="get">
+                        <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
+                        <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
+                            <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
+                            <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
+                            <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
+                            <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
+                            <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
+                        </select>
+                    </form>
                 </div>
-
-
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
+                </div>
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
                         <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
-
-
                     <div class="user-menu-dropdown">
-                        <div sec:authorize="hasRole('ADMIN')">
-                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                            <a th:href="@{/admin/dashboard}">Panel de administración</a>
-                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
-                            <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a th:href="@{'/' + ${userId} + '/home'}" th:text="#{nav.home}">Inicio</a>
+                        <div sec:authorize="hasRole('ADMIN_IT')">
+                            <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
+                            <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
                         </div>
-
-                        <div sec:authorize="hasRole('USER')">
-                            <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                            <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-                            <a th:href="@{'/upload/' + ${userId} + '/history'}">Mis consultas</a>
-                            <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+                            <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar medico/paciente</a>
                         </div>
+                        <div sec:authorize="hasRole('MEDICO')">
+                            <a th:href="@{/medico/patients}" th:text="#{nav.my.patients}">Mis pacientes</a>
+                        </div>
+                        <div sec:authorize="hasRole('PACIENTE')">
+                            <a th:href="@{/paciente/results}" th:text="#{nav.my.results}">Mis resultados</a>
+                        </div>
+                        <a href="#" onclick="openLogoutModal()" th:text="#{nav.logout}">Cerrar sesion</a>
                     </div>
                 </div>
+            </div>
         </nav>
     </header>
 
 
-    <h2>Mis pacientes</h2>
+    <main class="container">
 
-    <div th:if="${username}">
-        <p>Sesión: <b th:text="${username}"></b></p>
+        <div class="page-header">
+            <div>
+                <h2 th:text="#{medico.patients.title}">Mis pacientes</h2>
+                <p style="margin:0;font-size:.875rem;color:var(--gray-500);"
+                   th:if="${username}">
+                    <span th:text="#{medico.session.active}">Sesion activa como</span> <strong th:text="${username}"></strong>
+                </p>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(patients)}" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"
+                 style="color:var(--gray-300);margin-bottom:12px;">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"/>
+            </svg>
+            <p style="margin:0;" th:text="#{medico.patients.empty}">No tienes pacientes asignados.</p>
+        </div>
+
+        <!-- Table -->
+        <div th:if="${!#lists.isEmpty(patients)}" class="table-wrapper">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th th:text="#{common.patient}">Paciente</th>
+                        <th th:text="#{common.email}">Email</th>
+                        <th th:text="#{common.status}">Estado</th>
+                        <th th:text="#{medico.radiographies}">Radiografias</th>
+                        <th th:text="#{common.actions}">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${patients}">
+
+                        <!-- Nombre -->
+                        <td style="font-weight:500;color:var(--gray-900);" th:text="${p.name}">Nombre</td>
+
+                        <!-- Email -->
+                        <td style="color:var(--gray-500);font-size:.875rem;" th:text="${p.email}">email@ejemplo.com</td>
+
+                        <!-- Estado -->
+                        <td>
+                            <span th:if="${p.active}"   class="badge statusActive" th:text="#{status.active}">Activo</span>
+                            <span th:if="${!p.active}"  class="badge statusInactive" th:text="#{status.inactive}">Inactivo</span>
+                        </td>
+
+                        <!-- Ver radiografías -->
+                        <td>
+                            <a class="btn btn-outline btn-sm"
+                               th:href="@{'/medico/patients/' + ${p.id} + '/radiografias'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18M3.75 3h16.5A.75.75 0 0121 3.75v12a.75.75 0 01-.75.75H3.75A.75.75 0 013 15.75V3.75A.75.75 0 013.75 3z"/>
+                                </svg>
+                                <span th:text="#{medico.view.radiographies}">Ver radiografias</span>
+                            </a>
+                        </td>
+
+                        <!-- Subir radiografía -->
+                        <td>
+                            <a th:if="${p.active}"
+                               class="btn btn-primary btn-sm"
+                               th:href="@{/medico/patients/{id}/upload(id=${p.id})}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
+                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+                                </svg>
+                                <span th:text="#{medico.upload.radiography}">Subir radiografia</span>
+                            </a>
+
+                            <span th:if="${!p.active}"
+                                  style="font-size:.8rem;color:var(--gray-400,#9ca3af);font-style:italic;">
+                                <span th:text="#{common.not.available}">No disponible</span>
+                            </span>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE CONFIRMAR LOGOUT -->
+    <div id="logoutModal" class="modal-overlay">
+        <div class="modal">
+            <p>
+                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
+                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para continuar.</span>
+            </p>
+            <div class="modal-buttons">
+                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar sesion</button>
+                <button type="button" class="btn-cancel" onclick="closeLogoutModal()" th:text="#{common.cancel}">Cancelar</button>
+            </div>
+        </div>
     </div>
+    <script>
+        function openLogoutModal() {
+            document.getElementById("logoutModal").classList.add("active");
+        }
 
-    <div th:if="${#lists.isEmpty(patients)}">
-        <p>No tienes pacientes asignados.</p>
-    </div>
+        function closeLogoutModal() {
+            document.getElementById("logoutModal").classList.remove("active");
+        }
 
-    <div th:if="${!#lists.isEmpty(patients)}">
-        <table border="1" cellpadding="6">
-            <thead>
-                <tr>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="p : ${patients}">
-                    <td th:text="${p.name}">Nombre</td>
-                    <td th:text="${p.email}">Email</td>
+        function confirmLogout() {
+            window.location.href = "/logout";
+        }
 
-                    <td>
-                        <span th:text="${p.active ? 'ACTIVO' : 'INACTIVO'}">ACTIVO</span>
-                    </td>
-
-                    <td>
-                        <a th:if="${p.active}" th:href="@{/medico/patients/{id}/upload(id=${p.id})}">
-                            Subir radiografía
-                        </a>
-
-                        <span th:if="${!p.active}">
-                            No disponible (paciente inactivo)
-                        </span>
-                    </td>
-                </tr>
-
-            </tbody>
-        </table>
-    </div>
-
-    <p>
-        <a th:href="@{/admin-hospital/assignments/new}">Asignaciones (Admin Hospital)</a> |
-        <a th:href="@{/}">Inicio</a>
-    </p>
-
+        // Cerrar modal haciendo clic fuera
+        document.getElementById("logoutModal").addEventListener("click", function (e) {
+            if (e.target === this) closeLogoutModal();
+        });
+    </script>
 </body>
-
 </html>

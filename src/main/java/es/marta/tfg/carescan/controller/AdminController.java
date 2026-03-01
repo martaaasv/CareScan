@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import es.marta.tfg.carescan.model.Estado;
 import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.ConsultaRepository;
 import es.marta.tfg.carescan.repository.UserRepository;
+import es.marta.tfg.carescan.service.HardDeleteUserService;
+import es.marta.tfg.carescan.service.PatientDeletionService;
 
 @Controller
 @RequestMapping("/admin")
@@ -30,6 +33,12 @@ public class AdminController {
 
     @Autowired
     private ConsultaRepository consultaRepository;
+
+    @Autowired
+    private HardDeleteUserService hardDeleteUserService;
+
+    @Autowired
+    private PatientDeletionService patientDeletionService;
 
     @GetMapping("/dashboard")
     public String adminDashboard(Model model, Authentication auth) {
@@ -97,7 +106,7 @@ public class AdminController {
         return "redirect:/admin/users";
     }
 
-    @PostMapping("/users/{id}/delete")
+    /*   @PostMapping("/users/{id}/delete")
     public String deleteUser(
             @PathVariable Long id,
             RedirectAttributes redirectAttributes) {
@@ -114,6 +123,44 @@ public class AdminController {
         userRepository.delete(user);
 
         redirectAttributes.addFlashAttribute("mensajeExito", "Usuario borrado correctamente.");
+        return "redirect:/admin/users";
+    }*/
+    @PostMapping("/patients/{patientId}/delete")
+    public String deletePatient(@PathVariable Long patientId, RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        // Solo permitimos borrar duro si ya está INACTIVO
+        if (patient.getEstado() != Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "Solo se puede eliminar definitivamente un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        patientDeletionService.hardDeletePatient(patientId);
+
+        ra.addFlashAttribute("success", "Paciente eliminado definitivamente (consultas, radiografías, asignaciones, etc.).");
+        return "redirect:/admin-hospital/patients";
+    }
+
+    @PostMapping("/users/{id}/hard-delete")
+    public String hardDeleteUser(@PathVariable Long id, RedirectAttributes ra) {
+
+        Optional<User> opt = userRepository.findById(id);
+        if (opt.isEmpty()) {
+            ra.addFlashAttribute("mensajeError", "El usuario no existe.");
+            return "redirect:/admin/users";
+        }
+
+        try {
+            hardDeleteUserService.hardDeleteUser(id);
+            ra.addFlashAttribute("mensajeExito", "Usuario eliminado definitivamente (borrado completo).");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensajeError", "No se pudo eliminar el usuario. Revisa claves foráneas o relaciones: " + e.getMessage());
+        }
         return "redirect:/admin/users";
     }
 }

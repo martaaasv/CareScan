@@ -4,112 +4,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CareScan - Inicio</title>
+    <title th:text="#{title.home}">CareScan - Inicio</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
 <body>
+
     <header>
-        <div class="logo">CareScan</div>
+        <div class="logo">Care<span style="color:var(--green-500)">Scan</span></div>
 
         <nav class="main-nav">
-
             <div class="nav-right">
-
-                <div sec:authorize="isAnonymous()">
-                    <a th:href="@{/about}">Saber más</a>
+                <div class="lang-switcher">
+                    <form method="get">
+                        <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
+                        <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
+                            <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano
+                            </option>
+                            <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan
+                            </option>
+                            <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego
+                            </option>
+                            <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco
+                            </option>
+                            <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles
+                            </option>
+                        </select>
+                    </form>
                 </div>
-
+                <div sec:authorize="isAnonymous()">
+                    <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
+                </div>
                 <div class="user-menu" sec:authorize="isAuthenticated()">
                     <button type="button" class="user-menu-toggle">
                         <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
                         <span class="user-name" th:text="${username}">Usuario</span>
                     </button>
-
                     <div class="user-menu-dropdown">
-
-                        <!-- Links comunes a cualquier usuario autenticado -->
-                        <a th:href="@{'/' + ${userId} + '/home'}">Home</a>
-                        <a th:href="@{'/' + ${userId} + '/settings'}">Configuración</a>
-
-                        <!-- ADMIN IT -->
+                        <a th:href="@{'/' + ${userId} + '/home'}" th:text="#{nav.home}">Inicio</a>
                         <div sec:authorize="hasRole('ADMIN_IT')">
-                            <a th:href="@{/admin/dashboard}">Panel de administración IT</a>
-                            <a th:href="@{/admin/users}">Gestión de usuarios</a>
+                            <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
+                            <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
                         </div>
-
-                        <!-- ADMIN HOSPITAL -->
                         <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
-                            <a th:href="@{/admin-hospital/patients/new}">Crear paciente</a>
-                            <a th:href="@{/admin-hospital/assignments/new}">Asignar médico/paciente</a>
+                            <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar
+                                pacientes</a>
+                            <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear
+                                paciente</a>
+                            <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar
+                                medico/paciente</a>
                         </div>
-
-                        <!-- MÉDICO -->
                         <div sec:authorize="hasRole('MEDICO')">
-                            <a th:href="@{/medico/patients}">Mis pacientes</a>
+                            <a th:href="@{/medico/patients}" th:text="#{nav.my.patients}">Mis pacientes</a>
                         </div>
-
-                        <!-- PACIENTE -->
                         <div sec:authorize="hasRole('PACIENTE')">
-                            <a th:href="@{/paciente/results}">Mis resultados</a>
+                            <a th:href="@{/paciente/results}" th:text="#{nav.my.results}">Mis resultados</a>
                         </div>
-
-                        <a href="#" onclick="openLogoutModal()">Cerrar sesión</a>
+                        <a href="#" onclick="openLogoutModal()" th:text="#{nav.logout}">Cerrar sesion</a>
                     </div>
                 </div>
+            </div>
         </nav>
     </header>
 
     <main>
         <div class="container">
-            <h2>Bienvenido a CareScan</h2>
-            <p>Escanea, analiza y gestiona resultados médicos fácilmente.</p>
+            <h2 th:text="#{home.welcome}">Bienvenido a CareScan</h2>
+            <p th:text="#{home.subtitle}">Escanea, analiza y gestiona resultados medicos facilmente.</p>
 
             <div sec:authorize="isAnonymous()">
-                <p>Inicia sesión o crea tu cuenta para comenzar a usar la plataforma.</p>
-                <a th:href="@{/login}"><button>Iniciar sesión</button></a>
-                <!-- SignUp ya no es público en el nuevo flujo; lo ocultamos -->
+                <p th:text="#{home.login.prompt}">Inicia sesion para acceder a la plataforma.</p>
+                <a th:href="@{/login}"><button th:text="#{home.login.button}">Iniciar sesion</button></a>
             </div>
 
             <!-- PACIENTE -->
             <div sec:authorize="hasRole('PACIENTE')">
-                <h3>Zona de paciente</h3>
-                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
-                <p>Puedes consultar tus resultados publicados.</p>
+                <h3 th:text="#{home.patient.area}">Zona de paciente</h3>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
+                <p th:text="#{home.patient.desc}">Puedes consultar tus resultados publicados.</p>
 
                 <a th:href="@{/paciente/results}">
-                    <button type="button">Ver mis resultados</button>
+                    <button type="button" th:text="#{home.patient.cta}">Ver mis resultados</button>
                 </a>
             </div>
 
             <!-- MÉDICO -->
             <div sec:authorize="hasRole('MEDICO')">
-                <h3>Zona de médico</h3>
-                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
-                <p>Puedes consultar tus pacientes asignados y subir radiografías.</p>
+                <h3 th:text="#{home.doctor.area}">Zona de medico</h3>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
+                <p th:text="#{home.doctor.desc}">Puedes consultar tus pacientes asignados y subir radiografias.</p>
 
                 <a th:href="@{/medico/patients}">
-                    <button type="button">Ir a mis pacientes</button>
+                    <button type="button" th:text="#{home.doctor.cta}">Ir a mis pacientes</button>
                 </a>
             </div>
 
             <!-- ADMIN HOSPITAL -->
             <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
-                <h3>Administración del hospital</h3>
-                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
-                <p>Desde aquí puedes dar de alta pacientes y asignarlos a médicos.</p>
+                <h3 th:text="#{home.admin.hospital.area}">Administracion del hospital</h3>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
+                <p th:text="#{home.admin.hospital.desc}">Desde aqui puedes dar de alta pacientes y asignarlos a medicos.
+                </p>
 
-                <a th:href="@{/admin-hospital/patients}">Gestionar pacientes</a>
+                <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
             </div>
 
             <!-- ADMIN IT -->
             <div sec:authorize="hasRole('ADMIN_IT')">
-                <h3>Panel de administración IT</h3>
-                <p>Hola, <strong><span sec:authentication="name"></span></strong> </p>
-                <p>Aquí puedes gestionar usuarios, ver estadísticas y administrar el sistema.</p>
+                <h3 th:text="#{home.admin.it.area}">Panel de administracion IT</h3>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
+                <p th:text="#{home.admin.it.desc}">Aqui puedes gestionar usuarios, ver estadisticas y administrar el
+                    sistema.</p>
 
                 <a th:href="@{/admin/dashboard}">
-                    <button type="button">Ir al panel de administrador IT</button>
+                    <button type="button" th:text="#{home.admin.it.cta}">Ir al panel de administrador IT</button>
                 </a>
             </div>
         </div>
@@ -123,12 +135,15 @@
     <div id="logoutModal" class="modal-overlay">
         <div class="modal">
             <p>
-                ¿Seguro que deseas cerrar sesión?<br>
-                Tendrás que volver a iniciar sesión para continuar.
+                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
+                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para
+                    continuar.</span>
             </p>
             <div class="modal-buttons">
-                <button type="button" class="btn-confirm" onclick="confirmLogout()">Cerrar sesión</button>
-                <button type="button" class="btn-cancel" onclick="closeLogoutModal()">Cancelar</button>
+                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar
+                    sesion</button>
+                <button type="button" class="btn-cancel" onclick="closeLogoutModal()"
+                    th:text="#{common.cancel}">Cancelar</button>
             </div>
         </div>
     </div>
