@@ -10,54 +10,7 @@
 
 <body>
 
-   <header>
-        <div class="logo">Care<span style="color:var(--green-500)">Scan</span></div>
-
-        <nav class="main-nav">
-            <div class="nav-right">
-                <div class="lang-switcher">
-                    <form method="get">
-                        <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
-                        <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
-                            <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
-                            <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
-                            <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
-                            <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
-                            <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
-                        </select>
-                    </form>
-                </div>
-                <div sec:authorize="isAnonymous()">
-                    <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
-                </div>
-                <div class="user-menu" sec:authorize="isAuthenticated()">
-                    <button type="button" class="user-menu-toggle">
-                        <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
-                        <span class="user-name" th:text="${username}">Usuario</span>
-                    </button>
-                    <div class="user-menu-dropdown">
-                        <a th:href="@{'/' + ${userId} + '/home'}" th:text="#{nav.home}">Inicio</a>
-                        <div sec:authorize="hasRole('ADMIN_IT')">
-                            <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
-                            <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
-                        </div>
-                        <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
-                            <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
-                            <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear paciente</a>
-                            <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar medico/paciente</a>
-                        </div>
-                        <div sec:authorize="hasRole('MEDICO')">
-                            <a th:href="@{/medico/patients}" th:text="#{nav.my.patients}">Mis pacientes</a>
-                        </div>
-                        <div sec:authorize="hasRole('PACIENTE')">
-                            <a th:href="@{/paciente/results}" th:text="#{nav.my.results}">Mis resultados</a>
-                        </div>
-                        <a href="#" onclick="openLogoutModal()" th:text="#{nav.logout}">Cerrar sesion</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
+    <div th:replace="fragments/header :: header"></div>
 
 
     <main class="pageWrapper">
@@ -66,7 +19,8 @@
             <div class="cardHeader">
                 <div>
                     <h2 class="cardTitle" th:text="#{new.patient.title}">Alta de paciente</h2>
-                    <p class="cardSubtitle" th:text="#{new.patient.subtitle}">Crea un paciente y genera una contrasena temporal para el primer acceso.</p>
+                    <p class="cardSubtitle" th:text="#{new.patient.subtitle}">Crea un paciente y genera una contrasena
+                        temporal para el primer acceso.</p>
                 </div>
             </div>
 
@@ -84,12 +38,15 @@
 
                 <div class="formRow">
                     <label for="email" th:text="#{common.email}">Email</label>
-                    <input id="email" type="email" name="email" required th:placeholder="#{new.patient.email.placeholder}">
+                    <input id="email" type="email" name="email" required
+                        th:placeholder="#{new.patient.email.placeholder}">
                 </div>
 
                 <div class="cardActions">
-                    <button type="submit" class="btn btn-primary" th:text="#{nav.patient.create}">Crear paciente</button>
-                    <a th:href="@{'/' + ${userId} + '/home'}" class="btn btn-secondary" th:text="#{common.back}">Volver</a>
+                    <button type="submit" class="btn btn-primary" th:text="#{nav.patient.create}">Crear
+                        paciente</button>
+                    <a th:href="@{'/' + ${userId} + '/home'}" class="btn btn-secondary"
+                        th:text="#{common.back}">Volver</a>
                 </div>
 
             </form>
@@ -112,18 +69,18 @@
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div style="width:32px;height:32px;border-radius:50%;background:var(--green-100);
                                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none"
-                             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"
-                             style="color:var(--green-700)">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2.5" style="color:var(--green-700)">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
                     </div>
-                    <h3 style="margin:0;font-size:1rem;font-weight:600;" th:text="#{new.patient.modal.created}">Paciente creado</h3>
+                    <h3 style="margin:0;font-size:1rem;font-weight:600;" th:text="#{new.patient.modal.created}">Paciente
+                        creado</h3>
                 </div>
                 <button class="btn-close" onclick="closeSuccessModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -131,7 +88,8 @@
             <div class="modal-body" style="padding:24px;">
 
                 <p style="margin-bottom:16px;color:var(--gray-500);font-size:.875rem;">
-                    <span th:text="#{new.patient.modal.share}">Comparte estas credenciales con el paciente. La contrasena solo se muestra una vez.</span>
+                    <span th:text="#{new.patient.modal.share}">Comparte estas credenciales con el paciente. La
+                        contrasena solo se muestra una vez.</span>
                 </p>
 
                 <!-- Email -->
@@ -141,8 +99,7 @@
                         Email
                     </div>
                     <div style="background:var(--gray-100);border-radius:var(--radius-sm);
-                                padding:10px 14px;font-size:.9rem;color:var(--gray-900);"
-                         th:text="${createdEmail}">
+                                padding:10px 14px;font-size:.9rem;color:var(--gray-900);" th:text="${createdEmail}">
                         paciente@correo.com
                     </div>
                 </div>
@@ -156,20 +113,19 @@
                     <div style="display:flex;align-items:center;gap:8px;">
                         <div style="flex:1;background:var(--gray-100);border-radius:var(--radius-sm);
                                     padding:10px 14px;font-family:var(--font-mono);font-size:.95rem;
-                                    color:var(--gray-900);letter-spacing:.05em;"
-                             th:text="${tempPassword}" id="tempPasswordText">
+                                    color:var(--gray-900);letter-spacing:.05em;" th:text="${tempPassword}"
+                            id="tempPasswordText">
                             abc123xyz
                         </div>
                         <!-- Botón copiar -->
-                        <button type="button" onclick="copyPassword()" id="copyBtn"
-                                style="flex-shrink:0;padding:10px 12px;border-radius:var(--radius-sm);
+                        <button type="button" onclick="copyPassword()" id="copyBtn" style="flex-shrink:0;padding:10px 12px;border-radius:var(--radius-sm);
                                        border:1.5px solid var(--gray-200);background:var(--white);
                                        cursor:pointer;color:var(--gray-600);transition:all .15s;"
-                                th:title="#{new.patient.modal.copy.password}">
+                            th:title="#{new.patient.modal.copy.password}">
                             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none"
-                                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75"/>
+                                    d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
                             </svg>
                         </button>
                     </div>
@@ -178,11 +134,11 @@
                 <!-- Aviso -->
                 <div style="display:flex;align-items:flex-start;gap:8px;background:var(--amber-100);
                             border-radius:var(--radius-sm);padding:10px 12px;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
-                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"
-                         style="color:var(--amber-500);flex-shrink:0;margin-top:1px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2"
+                        style="color:var(--amber-500);flex-shrink:0;margin-top:1px;">
                         <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                     </svg>
                     <span style="font-size:.8rem;color:#92400e;font-weight:500;">
                         <span th:text="#{new.patient.modal.copy.now}">Copiala ahora, no se volvera a mostrar.</span>
@@ -243,37 +199,7 @@
         });
     </script>
 
-    <!-- MODAL DE CONFIRMAR LOGOUT -->
-    <div id="logoutModal" class="modal-overlay">
-        <div class="modal">
-            <p>
-                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
-                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para continuar.</span>
-            </p>
-            <div class="modal-buttons">
-                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar sesion</button>
-                <button type="button" class="btn-cancel" onclick="closeLogoutModal()" th:text="#{common.cancel}">Cancelar</button>
-            </div>
-        </div>
-    </div>
-    <script>
-        function openLogoutModal() {
-            document.getElementById("logoutModal").classList.add("active");
-        }
-
-        function closeLogoutModal() {
-            document.getElementById("logoutModal").classList.remove("active");
-        }
-
-        function confirmLogout() {
-            window.location.href = "/logout";
-        }
-
-        // Cerrar modal haciendo clic fuera
-        document.getElementById("logoutModal").addEventListener("click", function (e) {
-            if (e.target === this) closeLogoutModal();
-        });
-    </script>
-
+    <div th:replace="fragments/footer :: footer"></div>
 </body>
+
 </html>

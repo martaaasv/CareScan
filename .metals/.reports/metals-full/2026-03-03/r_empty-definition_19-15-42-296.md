@@ -1,3 +1,14 @@
+error id: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/security/SecurityConfiguration.java:_empty_/UsernamePasswordAuthenticationFilter#
+file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/security/SecurityConfiguration.java
+empty definition using pc, found symbol in pc: _empty_/UsernamePasswordAuthenticationFilter#
+empty definition using semanticdb
+empty definition using fallback
+non-local guesses:
+
+offset: 3354
+uri: file:///C:/Users/marta/Documents/DOBLE%20GRADO/4º%20carrera/TFG/WEB/TFG/src/main/java/es/marta/tfg/carescan/security/SecurityConfiguration.java
+text:
+```scala
 package es.marta.tfg.carescan.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +83,7 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFi@@lter.class);
 
         return http.build();
     }
@@ -116,3 +127,10 @@ public class SecurityConfiguration {
     }
 
 }
+
+```
+
+
+#### Short summary: 
+
+empty definition using pc, found symbol in pc: _empty_/UsernamePasswordAuthenticationFilter#

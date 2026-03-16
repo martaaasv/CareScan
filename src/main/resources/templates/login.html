@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="#{title.login}">CareScan - Inicio de sesion</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
-    
+
 </head>
 
 <body>
@@ -20,11 +20,15 @@
                 <form method="get">
                     <label for="langSelect" class="lang-label" th:text="#{lang.selector}">Idioma</label>
                     <select id="langSelect" name="lang" class="lang-select" onchange="this.form.submit()">
-                        <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano</option>
-                        <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan</option>
-                        <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego</option>
+                        <option value="es" th:selected="${#locale.language == 'es'}" th:text="#{lang.es}">Castellano
+                        </option>
+                        <option value="ca" th:selected="${#locale.language == 'ca'}" th:text="#{lang.ca}">Catalan
+                        </option>
+                        <option value="gl" th:selected="${#locale.language == 'gl'}" th:text="#{lang.gl}">Gallego
+                        </option>
                         <option value="eu" th:selected="${#locale.language == 'eu'}" th:text="#{lang.eu}">Vasco</option>
-                        <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles</option>
+                        <option value="en" th:selected="${#locale.language == 'en'}" th:text="#{lang.en}">Ingles
+                        </option>
                     </select>
                 </form>
             </div>
@@ -67,9 +71,6 @@
         </section>
     </main>
 
-    <footer>
-        <p>&copy; 2024 CareScan - TFG Marta</p>
-    </footer>
 
     <script>
         window.addEventListener('load', () => {
@@ -84,7 +85,7 @@
             }
         });
     </script>
-
+    <div th:replace="fragments/footer :: footer"></div>
 </body>
 
 </html>
