@@ -1,0 +1,2872 @@
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\CareScan.java ===== 
+package es.marta.tfg.carescan;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+
+@SpringBootApplication
+public class CareScan {
+    public static void main(String[] args) {
+        SpringApplication.run(CareScan.class, args);
+
+    }
+} 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\SampleData.java ===== 
+package es.marta.tfg.carescan;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
+
+@Service
+public class SampleData {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @PostConstruct
+    public void init() throws java.io.IOException {
+        try {
+            if (userRepository.count() == 0) {
+                
+                User adminIT = new User();
+                adminIT.setName("AdminIT");
+                adminIT.setEmail("adminIT@carescan.com");
+                adminIT.setPassword(new BCryptPasswordEncoder().encode("1234adminit"));
+                adminIT.setRole(Role.ADMIN_IT);
+                userRepository.save(adminIT);
+
+                User adminH = new User();
+                adminH.setName("AdminH");
+                adminH.setEmail("adminH@carescan.com");
+                adminH.setPassword(new BCryptPasswordEncoder().encode("1234adminh"));
+                adminH.setRole(Role.ADMIN_HOSPITAL);
+                userRepository.save(adminH);
+
+                User user1 = new User();
+                user1.setName("MedicoPrueba");
+                user1.setEmail("medico@gmail.com");
+                user1.setPassword(new BCryptPasswordEncoder().encode("1234medico"));
+                user1.setRole(Role.MEDICO);
+                userRepository.save(user1);
+
+
+            }
+
+        } catch (RuntimeException e) {
+            org.slf4j.LoggerFactory.getLogger(SampleData.class).error("Unexpected runtime error occurred while initializing sample data", e);
+        }
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\config\I18nConfig.java ===== 
+package es.marta.tfg.carescan.config;
+
+import java.util.Locale;
+
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+
+@Configuration
+public class I18nConfig implements WebMvcConfigurer {
+
+    @Bean
+    public LocaleResolver localeResolver() {
+        CookieLocaleResolver resolver = new CookieLocaleResolver("CARESCAN_LANG");
+        resolver.setDefaultLocale(new Locale("es")); // castellano por defecto
+        resolver.setCookiePath("/");
+        resolver.setCookieMaxAge(60 * 60 * 24 * 365); // 1 año
+        return resolver;
+    }
+
+    @Bean
+    public LocaleChangeInterceptor localeChangeInterceptor() {
+        LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
+        interceptor.setParamName("lang");
+        return interceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(localeChangeInterceptor());
+    }
+ 
+    @Bean
+    public MessageSource messageSource() {
+        ReloadableResourceBundleMessageSource ms = new ReloadableResourceBundleMessageSource();
+        ms.setBasename("classpath:i18n/messages");
+        ms.setDefaultEncoding("UTF-8");
+        ms.setCacheSeconds(3600);
+        ms.setFallbackToSystemLocale(false);
+        return ms;
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\AdminController.java ===== 
+package es.marta.tfg.carescan.controller;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import es.marta.tfg.carescan.model.Estado;
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+import es.marta.tfg.carescan.service.HardDeleteUserService;
+import es.marta.tfg.carescan.service.PatientDeletionService;
+
+@Controller
+@RequestMapping("/admin")
+public class AdminController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ConsultaRepository consultaRepository;
+
+    @Autowired
+    private HardDeleteUserService hardDeleteUserService;
+
+    @Autowired
+    private PatientDeletionService patientDeletionService;
+
+    @GetMapping("/dashboard")
+    public String adminDashboard(Model model, Authentication auth) {
+
+        List<User> users = userRepository.findAll();
+
+        model.addAttribute("users", users);
+
+        long totalUsuarios = users.size();
+        long totalConsultas = consultaRepository.count();
+
+        Map<Long, Long> consultasCount = new LinkedHashMap<>();
+        for (User u : users) {
+            consultasCount.put(u.getId(), consultaRepository.countByUser(u));
+        }
+
+        model.addAttribute("totalUsuarios", totalUsuarios);
+        model.addAttribute("totalConsultas", totalConsultas);
+        model.addAttribute("consultasCount", consultasCount);
+
+        User admin = userRepository.findByEmail(auth.getName()).get();
+        model.addAttribute("userId", admin.getId());
+        model.addAttribute("username", admin.getName());
+
+        return "admin-dashboard";
+    }
+
+    @GetMapping("/users")
+    public String listUsers(Model model, Authentication auth) {
+
+        List<User> users = userRepository.findAll();
+
+        Map<Long, Long> consultasCount = new LinkedHashMap<>();
+        for (User u : users) {
+            long count = consultaRepository.countByUser(u);
+            consultasCount.put(u.getId(), count);
+        }
+
+        model.addAttribute("users", users);
+        model.addAttribute("consultasCount", consultasCount);
+        User admin = userRepository.findByEmail(auth.getName()).get();
+        model.addAttribute("userId", admin.getId());
+        model.addAttribute("username", admin.getName());
+
+        return "admin-users";
+    }
+
+    @PostMapping("/users/{id}/role")
+    public String changeUserRole(
+            @PathVariable Long id,
+            @RequestParam("role") Role role,
+            RedirectAttributes redirectAttributes) {
+
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensajeError", "El usuario no existe.");
+            return "redirect:/admin/users";
+        }
+
+        User user = optionalUser.get();
+        user.setRole(role);
+        userRepository.save(user);
+
+        redirectAttributes.addFlashAttribute("mensajeExito", "Rol actualizado correctamente.");
+        return "redirect:/admin/users";
+    }
+
+    /*   @PostMapping("/users/{id}/delete")
+    public String deleteUser(
+            @PathVariable Long id,
+            RedirectAttributes redirectAttributes) {
+
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (optionalUser.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensajeError", "El usuario no existe.");
+            return "redirect:/admin/users";
+        }
+
+        User user = optionalUser.get();
+
+        consultaRepository.deleteByUser(user);
+        userRepository.delete(user);
+
+        redirectAttributes.addFlashAttribute("mensajeExito", "Usuario borrado correctamente.");
+        return "redirect:/admin/users";
+    }*/
+    @PostMapping("/patients/{patientId}/delete")
+    public String deletePatient(@PathVariable Long patientId, RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        // Solo permitimos borrar duro si ya está INACTIVO
+        if (patient.getEstado() != Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "Solo se puede eliminar definitivamente un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        patientDeletionService.hardDeletePatient(patientId);
+
+        ra.addFlashAttribute("success", "Paciente eliminado definitivamente (consultas, radiografías, asignaciones, etc.).");
+        return "redirect:/admin-hospital/patients";
+    }
+
+    @PostMapping("/users/{id}/hard-delete")
+    public String hardDeleteUser(@PathVariable Long id, RedirectAttributes ra) {
+
+        Optional<User> opt = userRepository.findById(id);
+        if (opt.isEmpty()) {
+            ra.addFlashAttribute("mensajeError", "El usuario no existe.");
+            return "redirect:/admin/users";
+        }
+
+        try {
+            hardDeleteUserService.hardDeleteUser(id);
+            ra.addFlashAttribute("mensajeExito", "Usuario eliminado definitivamente (borrado completo).");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensajeError", "No se pudo eliminar el usuario. Revisa claves foráneas o relaciones: " + e.getMessage());
+        }
+        return "redirect:/admin/users";
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\AdminHospitalController.java ===== 
+package es.marta.tfg.carescan.controller;
+
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import es.marta.tfg.carescan.model.DoctorPatientAssignment;
+import es.marta.tfg.carescan.model.Estado;
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+import es.marta.tfg.carescan.service.HardDeleteUserService;
+
+@Controller
+@RequestMapping("/admin-hospital")
+public class AdminHospitalController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private DoctorPatientAssignmentRepository assignmentRepository;
+
+
+    private boolean isSelectablePatient(User u) {
+        return u != null
+                && u.getRole() == Role.PACIENTE
+                && u.getEstado() != Estado.INACTIVO;
+    }
+
+    @GetMapping("/patients/new")
+    public String newPatientForm(Model model, Authentication auth) {
+
+        if (auth != null) {
+            User admin = userRepository.findByEmail(auth.getName()).orElse(null);
+            if (admin != null) {
+                model.addAttribute("userId", admin.getId());
+                model.addAttribute("username", admin.getName());
+            }
+        }
+
+        return "adminHospital/newPatient";
+    }
+
+    @PostMapping("/patients")
+    public String createPatient(@RequestParam("name") String name,
+            @RequestParam("email") String email,
+            RedirectAttributes ra) {
+
+        if (userRepository.findByEmail(email).isPresent()) {
+            ra.addFlashAttribute("error", "Ya existe un usuario con ese email.");
+            return "redirect:/admin-hospital/patients/new";
+        }
+
+        String tempPassword = generateTempPassword(10);
+
+        User patient = new User();
+        patient.setName(name);
+        patient.setEmail(email);
+        patient.setRole(Role.PACIENTE);
+        patient.setPassword(passwordEncoder.encode(tempPassword));
+        patient.setTemporalPassword(true);
+        patient.setEstado(Estado.ESPERANDO_ASIGNACION);
+
+        userRepository.save(patient);
+
+        ra.addFlashAttribute("success", "Paciente creado correctamente.");
+        ra.addFlashAttribute("tempPassword", tempPassword);
+        ra.addFlashAttribute("createdEmail", email);
+
+        return "redirect:/admin-hospital/patients/new";
+    }
+
+    private String generateTempPassword(int length) {
+        String chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    // --------------------------
+    // FORM ASIGNAR MEDICO A PACIENTE
+    // (aquí el desplegable: NO INACTIVOS)
+    // --------------------------
+    @GetMapping("/assignments/new")
+    public String newAssignmentForm(Model model, Authentication auth) {
+
+        List<User> doctors = userRepository.findAllByRole(Role.MEDICO);
+
+        // SOLO pacientes NO INACTIVOS (para el desplegable)
+        List<User> patients = userRepository.findAllByRole(Role.PACIENTE)
+                .stream()
+                .filter(this::isSelectablePatient)
+                .toList();
+
+        model.addAttribute("doctors", doctors);
+        model.addAttribute("patients", patients);
+
+        if (auth != null) {
+            userRepository.findByEmail(auth.getName()).ifPresent(admin -> {
+                model.addAttribute("userId", admin.getId());
+                model.addAttribute("username", admin.getName());
+            });
+        }
+
+        return "adminHospital/newAssignment";
+    }
+
+    @PostMapping("/assignments")
+    public String createAssignment(@RequestParam("doctorId") Long doctorId,
+            @RequestParam("patientId") Long patientId,
+            RedirectAttributes ra) {
+
+        User doctor = userRepository.findById(doctorId).orElse(null);
+        User patient = userRepository.findById(patientId).orElse(null);
+
+        if (doctor == null || patient == null) {
+            ra.addFlashAttribute("error", "Médico o paciente no encontrado.");
+            return "redirect:/admin-hospital/assignments/new";
+        }
+
+        if (doctor.getRole() != Role.MEDICO) {
+            ra.addFlashAttribute("error", "El usuario seleccionado como médico no es MEDICO.");
+            return "redirect:/admin-hospital/assignments/new";
+        }
+
+        if (patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "El usuario seleccionado como paciente no es PACIENTE.");
+            return "redirect:/admin-hospital/assignments/new";
+        }
+
+        // BLOQUEO REAL: paciente inactivo no se asigna nunca
+        if (patient.getEstado() == Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "No se puede asignar médico a un paciente INACTIVO.");
+            return "redirect:/admin-hospital/assignments/new";
+        }
+
+        // Si ya existe asignación activa con ese mismo médico, no hacer nada
+        if (assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+            ra.addFlashAttribute("success", "Ese paciente ya está asignado a ese médico.");
+            return "redirect:/admin-hospital/assignments/new";
+        }
+
+        // Cerrar asignación activa anterior del paciente (si existe)
+        Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
+        if (activeAssignmentOpt.isPresent()) {
+            DoctorPatientAssignment a = activeAssignmentOpt.get();
+            a.setActive(false);
+            a.setEndDate(LocalDateTime.now());
+            assignmentRepository.save(a);
+        }
+
+        // Crear nueva asignación
+        DoctorPatientAssignment newAssign = new DoctorPatientAssignment();
+        newAssign.setDoctor(doctor);
+        newAssign.setPatient(patient);
+        newAssign.setStartDate(LocalDateTime.now());
+        newAssign.setActive(true);
+
+        // si se asigna, pasa a activo
+        patient.setEstado(Estado.ACTIVO);
+        userRepository.save(patient);
+
+        assignmentRepository.save(newAssign);
+
+        ra.addFlashAttribute("success", "Asignación creada correctamente.");
+        return "redirect:/admin-hospital/assignments/new";
+    }
+
+    // --------------------------
+    // TABLA GESTIÓN PACIENTES
+    // --------------------------
+    @GetMapping("/patients")
+    public String patientManagement(Model model, Authentication auth) {
+
+        if (auth != null) {
+            userRepository.findByEmail(auth.getName()).ifPresent(admin -> {
+                model.addAttribute("userId", admin.getId());
+                model.addAttribute("username", admin.getName());
+            });
+        }
+
+        List<User> patients = userRepository.findAllByRole(Role.PACIENTE);
+
+        List<DoctorPatientAssignment> activeAssignments = assignmentRepository.findByPatientInAndActiveTrue(patients);
+
+        Map<Long, String> patientDoctorMap = new HashMap<>();
+        for (DoctorPatientAssignment a : activeAssignments) {
+            patientDoctorMap.put(a.getPatient().getId(), a.getDoctor().getName());
+        }
+
+        model.addAttribute("patients", patients);
+        model.addAttribute("patientDoctorMap", patientDoctorMap);
+
+        return "adminHospital/patientManagement";
+    }
+
+    @PostMapping("/patients/{patientId}/deactivate")
+    public String deactivatePatient(@PathVariable Long patientId, RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        // Si ya está inactivo, no repetir acción
+        if (patient.getEstado() == Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "El paciente ya está INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        patient.setEstado(Estado.INACTIVO);
+        userRepository.save(patient);
+
+        // cerrar asignación activa si existe
+        Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
+        if (activeAssignmentOpt.isPresent()) {
+            DoctorPatientAssignment a = activeAssignmentOpt.get();
+            a.setActive(false);
+            a.setEndDate(LocalDateTime.now());
+            assignmentRepository.save(a);
+        }
+
+        ra.addFlashAttribute("success", "Paciente dado de baja correctamente.");
+        return "redirect:/admin-hospital/patients";
+    }
+
+    @GetMapping("/patients/{patientId}/changeDoctor")
+    public String changeDoctorForm(@PathVariable Long patientId, Model model, Authentication auth, RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        // BLOQUEO REAL: si está inactivo, no se puede cambiar médico
+        if (patient.getEstado() == Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "No se puede cambiar el médico de un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        List<User> doctors = userRepository.findAllByRole(Role.MEDICO);
+
+        model.addAttribute("patient", patient);
+        model.addAttribute("doctors", doctors);
+
+        if (auth != null) {
+            userRepository.findByEmail(auth.getName()).ifPresent(admin -> {
+                model.addAttribute("userId", admin.getId());
+                model.addAttribute("username", admin.getName());
+            });
+        }
+
+        return "adminHospital/changeDoctor";
+    }
+
+    @PostMapping("/patients/{patientId}/changeDoctor")
+    public String changeDoctor(@PathVariable Long patientId,
+            @RequestParam("doctorId") Long doctorId,
+            RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        // BLOQUEO REAL: si está inactivo, no se cambia médico
+        if (patient.getEstado() == Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "No se puede cambiar el médico de un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        User doctor = userRepository.findById(doctorId).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            ra.addFlashAttribute("error", "Médico no encontrado.");
+            return "redirect:/admin-hospital/patients/" + patientId + "/changeDoctor";
+        }
+
+        Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
+        if (activeAssignmentOpt.isPresent()) {
+            DoctorPatientAssignment a = activeAssignmentOpt.get();
+            a.setActive(false);
+            a.setEndDate(LocalDateTime.now());
+            assignmentRepository.save(a);
+        }
+
+        DoctorPatientAssignment newAssign = new DoctorPatientAssignment();
+        newAssign.setDoctor(doctor);
+        newAssign.setPatient(patient);
+        newAssign.setStartDate(LocalDateTime.now());
+        newAssign.setActive(true);
+        assignmentRepository.save(newAssign);
+        patient.setEstado(Estado.ACTIVO);
+        userRepository.save(patient);
+
+        ra.addFlashAttribute("success", "Médico asignado correctamente.");
+        return "redirect:/admin-hospital/patients";
+    }
+
+    
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\AlgorController.java ===== 
+package es.marta.tfg.carescan.controller;
+
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+
+@Controller
+@RequestMapping("/upload")
+public class AlgorController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ConsultaRepository consultaRepository;
+
+    @GetMapping("/{id}")
+    public String showUserUpload(@PathVariable Long id, Model model) {
+        model.addAttribute("username", userRepository.findById(id).map(User::getName).orElse("Usuario"));
+        model.addAttribute("userId", id);
+        return "upload";
+    }
+
+    @GetMapping("/{id}/upload")
+    public String redirectUploadGet(@PathVariable Long id) {
+        return "redirect:/upload/" + id;
+    }
+
+    @PostMapping("/{id}/upload")
+    public String uploadImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes, Model model) throws IOException {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+        if (file == null || file.isEmpty()) {
+            return "redirect:/upload/" + id;
+        }
+
+        String email = authentication.getName();
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        User usuarioAutenticado = optionalUser.get();
+        if (!usuarioAutenticado.getId().equals(id)) {
+            return "error/403";
+        }
+
+        String originalName = file.getOriginalFilename();
+        String safeName = (originalName == null) ? "archivo" : Paths.get(originalName).getFileName().toString();
+
+        int randomNumber = new Random().nextInt(100);
+
+        Consulta imagen = new Consulta();
+        imagen.setNombreArchivo(safeName);
+        imagen.setResultado(randomNumber);
+        imagen.setUser(usuarioAutenticado);
+        imagen.setImagen(file.getBytes());
+        imagen.setContentType(file.getContentType());
+        imagen.setFechaHora(LocalDateTime.now());
+
+        consultaRepository.save(imagen);
+
+        model.addAttribute("username", usuarioAutenticado.getName());
+        model.addAttribute("userId", id);
+        redirectAttributes.addFlashAttribute("fileName", safeName);
+        redirectAttributes.addFlashAttribute("randomNumber", randomNumber);
+        redirectAttributes.addFlashAttribute("userId", id);
+
+        return "redirect:/upload/" + id + "/results";
+    }
+
+    @GetMapping("/{id}/results")
+    public String showResults(@PathVariable Long id, Model model) {
+        model.addAttribute("username", userRepository.findById(id).map(User::getName).orElse("Usuario"));
+        if (!model.containsAttribute("userId")) {
+            return "redirect:/upload/" + id;
+        }
+        return "results";
+    }
+
+    @GetMapping("/{id}/history")
+    public String history(@PathVariable Long id, Model model, Authentication authentication) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        User user = optionalUser.get();
+        if (!user.getId().equals(id)) {
+            return "error/403";
+        }
+
+        List<Consulta> consultas = consultaRepository.findByUserOrderByFechaHoraDesc(user);
+        model.addAttribute("username", user.getName());
+        model.addAttribute("userId", id);
+        model.addAttribute("consultas", consultas);
+        return "history";
+    }
+    
+    @PostMapping("/{id}/history/delete")
+    public String deleteConsulta(
+            @PathVariable Long id,
+            @RequestParam("consultaId") Long consultaId,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
+        if (optionalUser.isEmpty()) {
+            return "redirect:/login";
+        }
+
+        User user = optionalUser.get();
+
+        if (!user.getId().equals(id)) {
+            return "error/403";
+        }
+
+        Optional<Consulta> optionalConsulta = consultaRepository.findById(consultaId);
+        if (optionalConsulta.isPresent()) {
+            Consulta consulta = optionalConsulta.get();
+            if (consulta.getUser().getId().equals(user.getId())) {
+                consultaRepository.delete(consulta);
+                redirectAttributes.addFlashAttribute("mensajeExito", "La consulta se ha borrado correctamente.");
+            } else {
+                redirectAttributes.addFlashAttribute("mensajeError", "No puedes borrar consultas de otro usuario.");
+            }
+        } else {
+            redirectAttributes.addFlashAttribute("mensajeError", "La consulta indicada no existe.");
+        }
+
+        return "redirect:/upload/" + id + "/history";
+    }
+
+   
+    @GetMapping("/consulta/{consultaId}/imagen")
+    public ResponseEntity<byte[]> verImagen(
+            @PathVariable Long consultaId,
+            Authentication authentication) {
+
+        if (authentication == null) {
+            return ResponseEntity.status(302)
+                    .header(HttpHeaders.LOCATION, "/login")
+                    .build();
+        }
+
+        Optional<User> optionalUser = userRepository.findByEmail(authentication.getName());
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(302)
+                    .header(HttpHeaders.LOCATION, "/login")
+                    .build();
+        }
+
+        User user = optionalUser.get();
+
+        Optional<Consulta> optionalConsulta = consultaRepository.findById(consultaId);
+        if (optionalConsulta.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Consulta consulta = optionalConsulta.get();
+
+        if (!consulta.getUser().getId().equals(user.getId())) {
+            return ResponseEntity.status(403).build();
+        }
+
+        if (consulta.getImagen() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        String contentType = consulta.getContentType();
+        MediaType mediaType = (contentType != null)
+                ? MediaType.parseMediaType(contentType)
+                : MediaType.APPLICATION_OCTET_STREAM;
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .body(consulta.getImagen());
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\GeneralController.java ===== 
+package es.marta.tfg.carescan.controller;
+
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+
+@Controller
+public class GeneralController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @GetMapping("/")
+    public String home(Authentication authentication, Model model) {
+        if (authentication != null) {
+            Optional<User> user = userRepository.findByEmail(authentication.getName());
+            if (user.isPresent()) {
+                Long userId = user.get().getId();
+                return "redirect:/" + userId + "/home";
+            }
+        }
+        return "home";
+    }
+
+    @GetMapping("/login")
+    public String inicioSesion() {
+        return "login";
+    }
+
+    // @GetMapping("/signUp")
+    // public String signUp(Model model) {
+    //     if (!model.containsAttribute("form")) {
+    //         model.addAttribute("form", new signUp());
+    //     }
+    //     return "signUp";
+    // }
+    // @PostMapping("/signUp")
+    // public String procesarRegistro(
+    //         @Valid @ModelAttribute("form") signUp form,
+    //         BindingResult binding,
+    //         RedirectAttributes ra) {
+    //     if (userRepository.existsByEmail(form.getEmail())) {
+    //         binding.rejectValue("email", "exists", "Ya existe una cuenta con este email");
+    //     }
+    //     if (binding.hasErrors()) {
+    //         ra.addFlashAttribute("org.springframework.validation.BindingResult.form", binding);
+    //         ra.addFlashAttribute("form", form);
+    //         return "redirect:/signUp";
+    //     }
+    //     User newUser = new User();
+    //     newUser.setName(form.getName());
+    //     newUser.setEmail(form.getEmail());
+    //     newUser.setPassword(passwordEncoder.encode(form.getPassword()));
+    //     newUser.setRole(Role.USER);
+    //     userRepository.save(newUser);
+    //     return "redirect:/login";
+    // }
+    @GetMapping("/{id}/home")
+    public String userHome(@PathVariable Long id,
+            Authentication authentication,
+            Model model) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUser
+                = userRepository.findByEmail(authentication.getName());
+        if (currentUser.isEmpty() || !currentUser.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        model.addAttribute("username", currentUser.get().getName());
+        model.addAttribute("roles", authentication.getAuthorities());
+        model.addAttribute("userId", id);
+        model.addAttribute("role", currentUser.get().getRole().name());
+
+        return "home";
+    }
+
+    @GetMapping("/{id}/settings")
+    public String userSettings(@PathVariable Long id,
+            Authentication authentication,
+            Model model) {
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUser
+                = userRepository.findByEmail(authentication.getName());
+        if (currentUser.isEmpty() || !currentUser.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        model.addAttribute("username", currentUser.get().getName());
+        model.addAttribute("userId", id);
+        return "settings";
+    }
+
+    @PostMapping("/{id}/change-password")
+    public String changePassword(@PathVariable Long id,
+            Authentication authentication,
+            @RequestParam("currentPassword") String currentPassword,
+            @RequestParam("newPassword") String newPassword,
+            @RequestParam("confirmPassword") String confirmPassword,
+            RedirectAttributes ra) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUserOpt = userRepository.findByEmail(authentication.getName());
+        if (currentUserOpt.isEmpty() || !currentUserOpt.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        User currentUser = currentUserOpt.get();
+
+        if (!passwordEncoder.matches(currentPassword, currentUser.getPassword())) {
+            ra.addFlashAttribute("passwordError",
+                    "La contraseña actual no es correcta.");
+            return "redirect:/" + id + "/settings";
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            ra.addFlashAttribute("passwordError",
+                    "Las contraseñas nuevas no coinciden.");
+            return "redirect:/" + id + "/settings";
+        }
+
+        if (!newPassword.matches("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$")) {
+            ra.addFlashAttribute("passwordError",
+                    "La contraseña debe tener al menos 8 caracteres, incluir letras y números.");
+            return "redirect:/" + id + "/settings";
+        }
+
+        currentUser.setPassword(passwordEncoder.encode(newPassword));
+        currentUser.setTemporalPassword(false);
+        userRepository.save(currentUser);
+
+        ra.addFlashAttribute("passwordSuccess",
+                "Contraseña actualizada correctamente.");
+        return "redirect:/" + id + "/settings";
+    }
+
+    @PostMapping("/{id}/delete-account")
+    public String deleteAccount(@PathVariable Long id,
+            Authentication authentication,
+            HttpServletRequest request,
+            RedirectAttributes ra) {
+
+        if (authentication == null) {
+            return "redirect:/login";
+        }
+
+        Optional<User> currentUserOpt
+                = userRepository.findByEmail(authentication.getName());
+        if (currentUserOpt.isEmpty() || !currentUserOpt.get().getId().equals(id)) {
+            return "redirect:/access-denied";
+        }
+
+        userRepository.delete(currentUserOpt.get());
+
+        try {
+            request.logout();
+        } catch (Exception e) {
+
+        }
+        SecurityContextHolder.clearContext();
+
+        ra.addFlashAttribute("accountDeleted",
+                "Tu cuenta ha sido eliminada correctamente.");
+        return "redirect:/";
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\MedicoController.java ===== 
+package es.marta.tfg.carescan.controller;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
+
+import es.marta.tfg.carescan.model.AnalisisIA;
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.model.DoctorPatientAssignment;
+import es.marta.tfg.carescan.model.Estado;
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.AnalisisIARepository;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+
+@Controller
+@RequestMapping("/medico")
+public class MedicoController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ConsultaRepository consultaRepository;
+
+    @Autowired
+    private AnalisisIARepository analisisIARepository;
+
+    @Autowired
+    private DoctorPatientAssignmentRepository assignmentRepository;
+
+    @GetMapping("/patients")
+    public String patientList(Model model, Authentication auth) {
+
+        if (auth == null) {
+            return "redirect:/login";
+        }
+
+        User doctor = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return "redirect:/access-denied";
+        }
+
+        List<DoctorPatientAssignment> assignments = assignmentRepository.findByDoctorAndActiveTrue(doctor);
+
+        List<User> patients = assignments.stream()
+                .map(DoctorPatientAssignment::getPatient)
+                .toList();
+
+        model.addAttribute("userId", doctor.getId());
+        model.addAttribute("username", doctor.getName());
+        model.addAttribute("patients", patients);
+
+        return "medico/patientList";
+    }
+
+    // Subir la radiografía de un paciente 
+    @GetMapping("/patients/{patientId}/upload")
+    public String uploadRadiographyForm(@PathVariable Long patientId, Model model, Authentication auth) {
+
+        if (auth == null) {
+            return "redirect:/login";
+        }
+
+        User doctor = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return "redirect:/access-denied";
+        }
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            return "redirect:/access-denied";
+        }
+
+        if (patient.getEstado() == Estado.INACTIVO) {
+            return "redirect:/access-denied";
+        }
+
+        if (!assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+            return "redirect:/access-denied";
+        }
+
+        model.addAttribute("userId", doctor.getId());
+        model.addAttribute("username", doctor.getName());
+        model.addAttribute("patient", patient);
+
+        return "medico/uploadRadiography";
+    }
+
+    @PostMapping("/patients/{patientId}/upload")
+    public String uploadRadiography(@PathVariable Long patientId,
+            Authentication auth,
+            @RequestParam("file") MultipartFile file) throws IOException {
+
+        if (auth == null) {
+            return "redirect:/login";
+        }
+
+        User doctor = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return "redirect:/access-denied";
+        }
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            return "redirect:/access-denied";
+        }
+
+        if (!assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+            return "redirect:/access-denied";
+        }
+
+        if (file == null || file.isEmpty()) {
+            return "redirect:/medico/patients/" + patientId + "/upload";
+        }
+
+        Consulta consulta = new Consulta();
+        consulta.setUser(doctor);
+        consulta.setPatient(patient);
+        consulta.setFechaHora(LocalDateTime.now());
+        consulta.setContentType(file.getContentType());
+        consulta.setImagen(file.getBytes());
+        Consulta saved = consultaRepository.save(consulta);
+
+        double aux = Math.random();
+        double prob = Math.round(aux * 100.0) / 100.0;
+        String etiqueta = prob < 0.33 ? "NEGATIVO" : (prob < 0.66 ? "SOSPECHOSO" : "POSITIVO");
+
+        AnalisisIA analisis = new AnalisisIA();
+        analisis.setConsulta(saved);
+        analisis.setProbabilidad(prob);
+        analisis.setEtiqueta(etiqueta);
+        analisis.setModeloVersion("stub-v1");
+        analisis.setEjecutadoEn(LocalDateTime.now());
+
+        analisisIARepository.save(analisis);
+
+        return "redirect:/medico/patients/" + patientId + "/radiografias/" + saved.getId();
+
+    }
+
+    @GetMapping("/consultas/{consultaId}/results")
+    public String consultaResults(@PathVariable Long consultaId, Model model, Authentication auth) {
+
+        if (auth == null) {
+            return "redirect:/login";
+        }
+
+        User doctor = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return "redirect:/access-denied";
+        }
+
+        Consulta consulta = consultaRepository.findById(consultaId).orElse(null);
+        if (consulta == null) {
+            return "redirect:/access-denied";
+        }
+
+        if (!consulta.getUser().getId().equals(doctor.getId())) {
+            return "redirect:/access-denied";
+        }
+
+        model.addAttribute("userId", doctor.getId());
+        model.addAttribute("username", doctor.getName());
+        model.addAttribute("consulta", consulta);
+        model.addAttribute("patient", consulta.getPatient());
+
+        return "medico/caseResults";
+    }
+
+    @PostMapping("/consultas/{consultaId}/publish")
+    public String publishResult(@PathVariable Long consultaId, Authentication auth) {
+
+        if (auth == null) {
+            return "redirect:/login";
+        }
+
+        User doctor = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return "redirect:/access-denied";
+        }
+
+        Consulta consulta = consultaRepository.findById(consultaId).orElse(null);
+        if (consulta == null) {
+            return "redirect:/access-denied";
+        }
+
+        if (!consulta.getUser().getId().equals(doctor.getId())) {
+            return "redirect:/access-denied";
+        }
+
+        AnalisisIA analisis = consulta.getAnalisisIA();
+        if (analisis != null) {
+            analisis.setVisiblePaciente(true);
+            analisisIARepository.save(analisis);
+        }
+
+        return "redirect:/medico/consultas/" + consultaId + "/results";
+    }
+
+    private User requireDoctor(Authentication auth) {
+        if (auth == null) {
+            return null;
+        }
+        return userRepository.findByEmail(auth.getName()).orElse(null);
+    }
+
+    private boolean hasAccess(User doctor, User patient) {
+        return doctor != null
+                && doctor.getRole() == Role.MEDICO
+                && patient != null
+                && patient.getRole() == Role.PACIENTE
+                && patient.getEstado() != Estado.INACTIVO
+                && assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient);
+    }
+
+    @GetMapping("/patients/{patientId}/radiografias")
+    public String patientRadiographs(@PathVariable Long patientId, Model model, Authentication auth) {
+        User doctor = requireDoctor(auth);
+        if (doctor == null) {
+            return "redirect:/login";
+        }
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (!hasAccess(doctor, patient)) {
+            return "redirect:/access-denied";
+        }
+
+        List<Consulta> consultas = consultaRepository.findByUserAndPatientOrderByFechaHoraDesc(doctor, patient);
+
+        model.addAttribute("userId", doctor.getId());
+        model.addAttribute("username", doctor.getName());
+        model.addAttribute("patient", patient);
+        model.addAttribute("consultas", consultas);
+
+        return "medico/patientRadiographs";
+    }
+
+    @GetMapping("/patients/{patientId}/radiografias/{consultaId}")
+    public String radiographyDetail(
+            @PathVariable Long patientId,
+            @PathVariable Long consultaId,
+            Model model,
+            Authentication auth) {
+
+        User doctor = requireDoctor(auth);
+        if (doctor == null) {
+            return "redirect:/login";
+        }
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (!hasAccess(doctor, patient)) {
+            return "redirect:/access-denied";
+        }
+
+        Consulta consulta = consultaRepository.findByIdAndUserAndPatient(consultaId, doctor, patient).orElse(null);
+        if (consulta == null) {
+            return "redirect:/access-denied";
+        }
+
+        model.addAttribute("userId", doctor.getId());
+        model.addAttribute("username", doctor.getName());
+        model.addAttribute("patient", patient);
+        model.addAttribute("consulta", consulta);
+        model.addAttribute("analisis", consulta.getAnalisisIA()); // si lo tienes mapeado
+
+        return "medico/radiographyDetail";
+    }
+
+    @GetMapping("/consultas/{consultaId}/image")
+    @ResponseBody
+    public ResponseEntity<byte[]> consultaImage(@PathVariable Long consultaId, Authentication auth) {
+        User doctor = requireDoctor(auth);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Consulta consulta = consultaRepository.findById(consultaId).orElse(null);
+        if (consulta == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User patient = consulta.getPatient();
+        if (!hasAccess(doctor, patient)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        byte[] img = consulta.getImagen();
+        if (img == null || img.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        MediaType mediaType;
+        try {
+            mediaType = (consulta.getContentType() != null)
+                    ? MediaType.parseMediaType(consulta.getContentType())
+                    : MediaType.IMAGE_JPEG;
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return ResponseEntity.ok().contentType(mediaType).body(img);
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\controller\PacienteController.java ===== 
+package es.marta.tfg.carescan.controller;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+
+@Controller
+@RequestMapping("/paciente")
+public class PacienteController {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private ConsultaRepository consultaRepository;
+
+    @GetMapping("/results")
+    public String patientResults(Model model, Authentication auth) {
+
+        if (auth == null) return "redirect:/login";
+
+        User patient = userRepository.findByEmail(auth.getName()).orElse(null);
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            return "redirect:/access-denied";
+        }
+
+        List<Consulta> consultas = consultaRepository.findAll()
+                .stream()
+                .filter(c -> c.getPatient().getId().equals(patient.getId()))
+                .filter(c -> c.getAnalisisIA() != null && c.getAnalisisIA().isVisiblePaciente())
+                .toList();
+
+        model.addAttribute("consultas", consultas);
+        model.addAttribute("username", patient.getName());
+
+        return "paciente/patientResults";
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\DTO\signUp.java ===== 
+package es.marta.tfg.carescan.DTO;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+public class signUp {
+
+    @NotBlank(message = "El nombre es obligatorio")
+    private String name;
+
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "Formato de email no válido")
+    private String email;
+
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
+    @Pattern(
+        regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
+        message = "La contraseña debe contener letras y números"
+    )
+    private String password;
+
+    public String getName() {
+        return name;
+    }   
+    public void setName(String name) {
+        this.name = name;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\AnalisisIA.java ===== 
+package es.marta.tfg.carescan.model;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+
+@Entity
+public class AnalisisIA {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne
+    @JoinColumn(name = "consultaId", nullable = false, unique = true)
+    private Consulta consulta;
+
+    @Column(nullable = false)
+    private double probabilidad;
+
+    @Column(nullable = false)
+    private String etiqueta;
+
+    @Column(nullable = false)
+    private String modeloVersion;
+
+    @Column(nullable = false)
+    private LocalDateTime ejecutadoEn;
+
+    @Column(nullable = false)
+    private boolean visiblePaciente = false;
+
+    public AnalisisIA() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Consulta getConsulta() {
+        return consulta;
+    }
+
+    public void setConsulta(Consulta consulta) {
+        this.consulta = consulta;
+    }
+
+    public double getProbabilidad() {
+        return probabilidad;
+    }
+
+    public void setProbabilidad(double probabilidad) {
+        this.probabilidad = probabilidad;
+    }
+
+    public String getEtiqueta() {
+        return etiqueta;
+    }
+
+    public void setEtiqueta(String etiqueta) {
+        this.etiqueta = etiqueta;
+    }
+
+    public String getModeloVersion() {
+        return modeloVersion;
+    }
+
+    public void setModeloVersion(String modeloVersion) {
+        this.modeloVersion = modeloVersion;
+    }
+
+    public LocalDateTime getEjecutadoEn() {
+        return ejecutadoEn;
+    }
+
+    public void setEjecutadoEn(LocalDateTime ejecutadoEn) {
+        this.ejecutadoEn = ejecutadoEn;
+    }
+
+    public boolean isVisiblePaciente() {
+        return visiblePaciente;
+    }
+
+    public void setVisiblePaciente(boolean visiblePaciente) {
+        this.visiblePaciente = visiblePaciente;
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\Consulta.java ===== 
+package es.marta.tfg.carescan.model;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+
+@Entity
+public class Consulta {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String nombreArchivo;
+
+    private Integer resultado;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] imagen;
+
+    private String contentType;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    // "Dueño" de la radiografía
+    @ManyToOne
+    @JoinColumn(name = "patientId", nullable = false)
+    private User patient;
+
+    private LocalDateTime fechaHora;
+
+    @OneToOne(mappedBy = "consulta", cascade = CascadeType.ALL)
+    private AnalisisIA analisisIA;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNombreArchivo() {
+        return nombreArchivo;
+    }
+
+    public void setNombreArchivo(String nombreArchivo) {
+        this.nombreArchivo = nombreArchivo;
+    }
+
+    public Integer getResultado() {
+        return resultado;
+    }
+
+    public void setResultado(Integer resultado) {
+        this.resultado = resultado;
+    }
+
+    public byte[] getImagen() {
+        return imagen;
+    }
+
+    public void setImagen(byte[] imagen) {
+        this.imagen = imagen;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User usuarioAutenticado) {
+        this.user = usuarioAutenticado;
+    }
+
+    public LocalDateTime getFechaHora() {
+        return fechaHora;
+    }
+
+    public void setFechaHora(LocalDateTime fechaHora) {
+        this.fechaHora = fechaHora;
+    }
+
+    public User getPatient() {
+        return patient;
+    }
+
+    public void setPatient(User patient) {
+        this.patient = patient;
+    }
+
+    public AnalisisIA getAnalisisIA() {
+        return analisisIA;
+    }
+
+    public void setAnalisisIA(AnalisisIA analisisIA) {
+        this.analisisIA = analisisIA;
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\DoctorPatientAssignment.java ===== 
+package es.marta.tfg.carescan.model;
+
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "doctorPatientAssignment")
+public class DoctorPatientAssignment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "doctorId")
+    private User doctor;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "patientId")
+    private User patient;
+
+    @Column(nullable = false)
+    private LocalDateTime startDate;
+
+    @Column
+    private LocalDateTime endDate;
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    public DoctorPatientAssignment() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public User getDoctor() {
+        return doctor;
+    }
+
+    public void setDoctor(User doctor) {
+        this.doctor = doctor;
+    }
+
+    public User getPatient() {
+        return patient;
+    }
+
+    public void setPatient(User patient) {
+        this.patient = patient;
+    }
+
+    public LocalDateTime getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(LocalDateTime startDate) {
+        this.startDate = startDate;
+    }
+
+    public LocalDateTime getEndDate() {
+        return endDate;
+    }
+
+    public void setEndDate(LocalDateTime endDate) {
+        this.endDate = endDate;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\Estado.java ===== 
+package es.marta.tfg.carescan.model;
+
+public enum Estado {
+    ESPERANDO_ASIGNACION,
+    ACTIVO,
+    INACTIVO
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\Role.java ===== 
+package es.marta.tfg.carescan.model;
+
+public enum Role {
+    ADMIN_IT,
+    ADMIN_HOSPITAL,
+    MEDICO,
+    PACIENTE
+}
+
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\model\User.java ===== 
+package es.marta.tfg.carescan.model;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "users")
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    private String password;
+
+    @Column(nullable = false)
+    private boolean temporalPassword = false; //esta es la contraseña q te dan la primera vez y HAY Q CAMBIAR
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private Estado estado;
+
+    @ManyToMany
+    @JoinTable( // Pacientes de un médico
+            name = "doctorPatient",
+            joinColumns = @JoinColumn(name = "doctorId"),
+            inverseJoinColumns = @JoinColumn(name = "patientId")
+    )
+    private Set<User> patients = new HashSet<>();
+
+    @Column(nullable = false)
+    private boolean active = true;
+
+    @ManyToMany(mappedBy = "patients") // Médicos de un paciente
+    private Set<User> doctors = new HashSet<>();
+
+    public User() {
+    }
+
+    public User(String name, String password, String email) {
+        this.name = name;
+        this.password = password;
+        this.email = email;
+    }
+
+    public User(String name, String password, String email, Role role) {
+        this.name = name;
+        this.password = password;
+        this.email = email;
+        this.role = role;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public boolean isTemporalPassword() {
+        return temporalPassword;
+    }
+
+    public void setTemporalPassword(boolean temporalPassword) {
+        this.temporalPassword = temporalPassword;
+    }
+
+    public Set<User> getPatients() {
+        return patients;
+    }
+
+    public void setPatients(Set<User> patients) {
+        this.patients = patients;
+    }
+
+    public Set<User> getDoctors() {
+        return doctors;
+    }
+
+    public void setDoctors(Set<User> doctors) {
+        this.doctors = doctors;
+    }
+
+    
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public Estado getEstado() {
+        return estado;
+    }
+
+    public void setEstado(Estado estado) {
+        this.estado = estado;
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\repository\AnalisisIARepository.java ===== 
+package es.marta.tfg.carescan.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import es.marta.tfg.carescan.model.AnalisisIA;
+import es.marta.tfg.carescan.model.Consulta;
+
+public interface AnalisisIARepository extends JpaRepository<AnalisisIA, Long> {
+    void deleteByConsultaIn(List<Consulta> consultas);
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\repository\ConsultaRepository.java ===== 
+package es.marta.tfg.carescan.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.model.User;
+
+public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
+
+    List<Consulta> findByUserOrderByFechaHoraDesc(User user);
+
+    void deleteByUser(User user);
+
+    List<Consulta> findByUserAndPatientOrderByFechaHoraDesc(User doc, User pat);
+
+    Optional<Consulta> findByIdAndUserAndPatient(Long id, User doctor, User patient);
+
+    long countByUser(User user);
+
+    List<Consulta> findAllByPatientId(Long patientId);
+
+    List<Consulta> findAllByUserId(Long userId);
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\repository\DoctorPatientAssignmentRepository.java ===== 
+package es.marta.tfg.carescan.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import es.marta.tfg.carescan.model.DoctorPatientAssignment;
+import es.marta.tfg.carescan.model.User;
+
+public interface DoctorPatientAssignmentRepository extends JpaRepository<DoctorPatientAssignment, Long> {
+
+    Optional<DoctorPatientAssignment> findByPatientAndActiveTrue(User patient);
+
+    List<DoctorPatientAssignment> findByDoctorAndActiveTrue(User doctor);
+
+    Optional<DoctorPatientAssignment> findByDoctorAndPatientAndActiveTrue(User doctor, User patient);
+
+    List<DoctorPatientAssignment> findByPatientInAndActiveTrue(List<User> patients);
+
+    List<DoctorPatientAssignment> findByActiveTrue();
+
+    boolean existsByDoctorAndPatientAndActiveTrue(User doctor, User patient);
+
+    void deleteByPatientId(Long patientId);
+
+    void deleteByDoctorId(Long doctorId);
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\repository\UserRepository.java ===== 
+package es.marta.tfg.carescan.repository;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
+    List<User> findAllByRole(Role role);
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\CSRFHandlerConfiguration.java ===== 
+package es.marta.tfg.carescan.security;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Configuration
+public class CSRFHandlerConfiguration implements WebMvcConfigurer {
+
+	@Override
+	public void addInterceptors(InterceptorRegistry registry) {
+		registry.addInterceptor(new CSRFHandlerInterceptor());
+	}
+}
+
+class CSRFHandlerInterceptor implements HandlerInterceptor {
+
+	@Override
+	public void postHandle(final HttpServletRequest request, final HttpServletResponse response, final Object handler,
+			final ModelAndView modelAndView) throws Exception {
+
+		if (modelAndView != null) {
+
+			CsrfToken token = (CsrfToken) request.getAttribute("_csrf");
+			if (token != null) {
+				modelAndView.addObject("token", token.getToken());
+			}
+		}
+	}
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\CustomLogin.java ===== 
+package es.marta.tfg.carescan.security;
+
+import java.io.IOException;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.stereotype.Component;
+
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.UserRepository;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Component
+public class CustomLogin implements AuthenticationSuccessHandler {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException, ServletException {
+
+        String email = authentication.getName();
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + email));
+
+        Long userId = user.getId();
+
+        if (user.isTemporalPassword()) {
+            response.sendRedirect("/" + userId + "/settings");
+            return;
+        }
+
+        response.sendRedirect("/" + userId + "/home");
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\RepositoryUserDetailsService.java ===== 
+package es.marta.tfg.carescan.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.UserRepository;
+
+@Service
+public class RepositoryUserDetailsService implements UserDetailsService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+
+ 
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getEmail())
+                .password(user.getPassword())
+                .roles(user.getRole().name())  
+                .build();
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\SecurityConfiguration.java ===== 
+package es.marta.tfg.carescan.security;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import es.marta.tfg.carescan.security.jwt.JwtRequestFilter;
+import es.marta.tfg.carescan.security.jwt.UnauthorizedHandlerJwt;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfiguration {
+
+    @Autowired
+    private RepositoryUserDetailsService userDetailService;
+
+    @Autowired
+    private UnauthorizedHandlerJwt unauthorizedHandlerJwt;
+
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
+
+    @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    // API SEGURA (JWT)
+    @Bean
+    @Order(1)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**")
+                .exceptionHandling(handling -> handling
+                .authenticationEntryPoint(unauthorizedHandlerJwt)
+                .accessDeniedHandler((request, response, ex) -> {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+                })
+                )
+                .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.POST, "/api/users/login", "/api/users/register", "/api/users/logout").permitAll()
+                .requestMatchers("/api/medico/**").hasRole("MEDICO")
+                .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    // FORMULARIOS WEB
+    @Bean
+    @Order(2)
+    public SecurityFilterChain webFilterChain(HttpSecurity http, CustomLogin successHandler) throws Exception {
+
+        http.authenticationProvider(authenticationProvider());
+
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/admin/**").hasRole("ADMIN_IT")
+                .requestMatchers("/admin-hospital/**").hasRole("ADMIN_HOSPITAL")
+                .requestMatchers("/medico/**").hasRole("MEDICO")
+                .requestMatchers("/css/**").permitAll()
+                .requestMatchers("/paciente/**").hasRole("PACIENTE")
+                .requestMatchers("/upload/**", "/results", "/home", "/user/**")
+                .hasAnyRole("MEDICO", "PACIENTE")
+                .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                .loginPage("/login")
+                .loginProcessingUrl("/login")
+                .usernameParameter("email")
+                .passwordParameter("password")
+                .successHandler(successHandler)
+                .failureUrl("/login?error=true")
+                .permitAll()
+                )
+                .logout(logout -> logout
+                .logoutUrl("/logout")
+                .logoutSuccessUrl("/")
+                .permitAll()
+                );
+
+        return http.build();
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\StaticResourceConfig.java ===== 
+package es.marta.tfg.carescan.security;
+
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Configuration
+public class StaticResourceConfig implements WebMvcConfigurer {
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:uploads/");
+    }
+}
+  
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\AuthResponse.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+public class AuthResponse {
+
+    private Status status;
+    private String message;
+    private String error;
+
+    private String token;
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public enum Status {
+        SUCCESS, FAILURE
+    }
+
+    public AuthResponse() {
+    }
+
+    public AuthResponse(Status status, String message) {
+        this.status = status;
+        this.message = message;
+    }
+
+    public AuthResponse(Status status, String message, String error) {
+        this.status = status;
+        this.message = message;
+        this.error = error;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    @Override
+    public String toString() {
+        return "LoginResponse [status=" + status + ", message=" + message + ", error=" + error + "]";
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\JwtRequestFilter.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Component
+public class JwtRequestFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtRequestFilter.class);
+
+    private final UserDetailsService userDetailsService;
+
+    private final JwtTokenProvider jwtTokenProvider;
+
+    public JwtRequestFilter(UserDetailsService userDetailsService, JwtTokenProvider jwtTokenProvider) {
+        this.userDetailsService = userDetailsService;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
+
+        try {
+            var claims = jwtTokenProvider.validateToken(request, false);
+
+            if (claims != null) { // Only proceed if valid token found
+                var userDetails = userDetailsService.loadUserByUsername(claims.getSubject());
+
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
+        } catch (Exception ex) {
+            // log.error("Exception processing JWT Token: ", ex);
+        }
+
+        filterChain.doFilter(request, response);
+    }
+
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\JwtTokenProvider.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParser;
+import io.jsonwebtoken.Jwts;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+
+@Component
+public class JwtTokenProvider {
+
+	private final SecretKey jwtSecret = Jwts.SIG.HS256.key().build();
+	private final JwtParser jwtParser = Jwts.parser().verifyWith(jwtSecret).build();
+
+	public String tokenStringFromHeaders(HttpServletRequest req){
+		String bearerToken = req.getHeader(HttpHeaders.AUTHORIZATION);
+		if (bearerToken == null) {
+			throw new IllegalArgumentException("Missing Authorization header");
+		}
+		if(!bearerToken.startsWith("Bearer ")){
+			throw new IllegalArgumentException("Authorization header does not start with Bearer: " + bearerToken);
+		}
+		return bearerToken.substring(7);
+	}
+
+	private String tokenStringFromCookies(HttpServletRequest request) {
+		var cookies = request.getCookies();
+		if (cookies == null) {
+			throw new IllegalArgumentException("No cookies found in request");
+		}
+
+		for (Cookie cookie : cookies) {
+			if (TokenType.ACCESS.cookieName.equals(cookie.getName())) {
+				String accessToken = cookie.getValue();
+				if (accessToken == null) {
+					throw new IllegalArgumentException("Cookie %s has null value".formatted(TokenType.ACCESS.cookieName));
+				}
+
+				return accessToken;
+			}
+		}
+		throw new IllegalArgumentException("No access token cookie found in request");
+	}
+
+	public Claims validateToken(HttpServletRequest req, boolean fromCookie){
+		var token = fromCookie?
+				tokenStringFromCookies(req):
+				tokenStringFromHeaders(req);
+		return validateToken(token);
+	}
+
+	public Claims validateToken(String token) {
+		return jwtParser.parseSignedClaims(token).getPayload();
+	}
+
+	public String generateAccessToken(UserDetails userDetails) {
+		return buildToken(TokenType.ACCESS, userDetails).compact();
+	}
+
+	public String generateRefreshToken(UserDetails userDetails) {
+		var token = buildToken(TokenType.REFRESH, userDetails);
+        return token.compact();
+	}
+
+	private JwtBuilder buildToken(TokenType tokenType, UserDetails userDetails) {
+		var currentDate = new Date();
+		var expiryDate = Date.from(new Date().toInstant().plus(tokenType.duration));
+		return Jwts.builder()
+				.claim("roles", userDetails.getAuthorities())
+				.claim("type", tokenType.name())
+				.subject(userDetails.getUsername())
+				.issuedAt(currentDate)
+				.expiration(expiryDate)
+				.signWith(jwtSecret);
+	}
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\LoginRequest.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+public class LoginRequest {
+
+	private String username;
+	private String password;
+
+	public LoginRequest() {
+	}
+
+	public LoginRequest(String username, String password) {
+		this.username = username;
+		this.password = password;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	@Override
+	public String toString() {
+		return "LoginRequest [username=" + username + ", password=" + password + "]";
+	}
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\TokenType.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+import java.time.Duration;
+
+public enum TokenType {
+
+    ACCESS(Duration.ofMinutes(5), "AuthToken"),
+    REFRESH(Duration.ofDays(7), "RefreshToken");
+
+    /**
+     * Token lifetime in seconds
+     */
+    public final Duration duration;
+    public final String cookieName;
+
+    TokenType(Duration duration, String cookieName) {
+        this.duration = duration;
+        this.cookieName = cookieName;
+    }
+} 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\UnauthorizedHandlerJwt.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+import java.io.IOException;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.stereotype.Component;
+
+@Component
+public class UnauthorizedHandlerJwt implements AuthenticationEntryPoint {
+
+  private static final Logger logger = LoggerFactory.getLogger(UnauthorizedHandlerJwt.class);
+
+  @Override
+  public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+      throws IOException {
+    logger.info("Unauthorized error: {}", authException.getMessage());
+
+    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "message: %s, path: %s".formatted(authException.getMessage(), request.getServletPath()));
+  }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\security\jwt\UserLoginService.java ===== 
+package es.marta.tfg.carescan.security.jwt;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.stereotype.Service;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+
+@Service
+public class UserLoginService {
+
+	private static final Logger log = LoggerFactory.getLogger(UserLoginService.class);
+
+	private final AuthenticationManager authenticationManager;
+	private final UserDetailsService userDetailsService;
+	private final JwtTokenProvider jwtTokenProvider;
+
+	public UserLoginService(AuthenticationManager authenticationManager, UserDetailsService userDetailsService, JwtTokenProvider jwtTokenProvider) {
+		this.authenticationManager = authenticationManager;
+		this.userDetailsService = userDetailsService;
+		this.jwtTokenProvider = jwtTokenProvider;
+	}
+
+	public ResponseEntity<AuthResponse> login(HttpServletResponse response, LoginRequest loginRequest) {
+		
+		Authentication authentication = authenticationManager.authenticate(
+				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
+
+		
+		String username = loginRequest.getUsername();
+		UserDetails user = userDetailsService.loadUserByUsername(username);
+
+		HttpHeaders responseHeaders = new HttpHeaders();
+		var newAccessToken = jwtTokenProvider.generateAccessToken(user);
+		var newRefreshToken = jwtTokenProvider.generateRefreshToken(user);
+
+		response.addCookie(buildTokenCookie(TokenType.ACCESS, newAccessToken));
+		response.addCookie(buildTokenCookie(TokenType.REFRESH, newRefreshToken));
+
+		AuthResponse loginResponse = new AuthResponse(AuthResponse.Status.SUCCESS,
+				"Auth successful. Tokens are created in cookie.");
+		return ResponseEntity.ok().headers(responseHeaders).body(loginResponse);
+	}
+
+	public ResponseEntity<AuthResponse> refresh(HttpServletResponse response, String refreshToken) {
+		try {
+			var claims = jwtTokenProvider.validateToken(refreshToken);
+			UserDetails user = userDetailsService.loadUserByUsername(claims.getSubject());
+
+			var newAccessToken = jwtTokenProvider.generateAccessToken(user);
+			response.addCookie(buildTokenCookie(TokenType.ACCESS, newAccessToken));
+
+			AuthResponse loginResponse = new AuthResponse(AuthResponse.Status.SUCCESS,
+					"Auth successful. Tokens are created in cookie.");
+			return ResponseEntity.ok().body(loginResponse);
+
+		} catch (Exception e) {
+			log.error("Error while processing refresh token", e);
+			AuthResponse loginResponse = new AuthResponse(AuthResponse.Status.FAILURE,
+					"Failure while processing refresh token");
+			return ResponseEntity.ok().body(loginResponse);
+		}
+	}
+
+	public String logout(HttpServletResponse response) {
+		SecurityContextHolder.clearContext();
+		response.addCookie(removeTokenCookie(TokenType.ACCESS));
+		response.addCookie(removeTokenCookie(TokenType.REFRESH));
+
+		return "logout successfully";
+	}
+
+	private Cookie buildTokenCookie(TokenType type, String token) {
+		Cookie cookie = new Cookie(type.cookieName, token);
+		cookie.setMaxAge((int) type.duration.getSeconds());
+		cookie.setHttpOnly(true);
+		cookie.setPath("/");
+		return cookie;
+	}
+
+	private Cookie removeTokenCookie(TokenType type){
+		Cookie cookie = new Cookie(type.cookieName, "");
+		cookie.setMaxAge(0);
+		cookie.setHttpOnly(true);
+		cookie.setPath("/");
+		return cookie;
+	}
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\service\HardDeleteUserService.java ===== 
+package es.marta.tfg.carescan.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.model.Role;
+import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.AnalisisIARepository;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+
+@Service
+public class HardDeleteUserService {
+
+    private final UserRepository userRepository;
+    private final ConsultaRepository consultaRepository;
+    private final AnalisisIARepository analisisIARepository;
+    private final DoctorPatientAssignmentRepository assignmentRepository;
+
+    public HardDeleteUserService(UserRepository userRepository,
+            ConsultaRepository consultaRepository,
+            AnalisisIARepository analisisIARepository,
+            DoctorPatientAssignmentRepository assignmentRepository) {
+        this.userRepository = userRepository;
+        this.consultaRepository = consultaRepository;
+        this.analisisIARepository = analisisIARepository;
+        this.assignmentRepository = assignmentRepository;
+    }
+
+    @Transactional
+    public void hardDeleteUser(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        Role role = user.getRole();
+
+        // 1) Si es PACIENTE: borrar consultas donde es patient + análisis + asignaciones patient
+        if (role == Role.PACIENTE) {
+
+            List<Consulta> consultasPaciente = consultaRepository.findAllByPatientId(userId);
+
+            if (!consultasPaciente.isEmpty()) {
+                analisisIARepository.deleteByConsultaIn(consultasPaciente);
+                consultaRepository.deleteAll(consultasPaciente);
+            }
+
+            assignmentRepository.deleteByPatientId(userId);
+        }
+
+        // 2) Si es MEDICO: borrar consultas donde es doctor(user) + análisis + asignaciones doctor
+        if (role == Role.MEDICO) {
+
+            List<Consulta> consultasMedico = consultaRepository.findAllByUserId(userId);
+
+            if (!consultasMedico.isEmpty()) {
+                analisisIARepository.deleteByConsultaIn(consultasMedico);
+                consultaRepository.deleteAll(consultasMedico);
+            }
+
+            assignmentRepository.deleteByDoctorId(userId);
+        }
+
+        // 3) Si es ADMIN_HOSPITAL / ADMIN_IT:
+        // normalmente no cuelga nada de ellos. Si tienes tablas relacionadas (logs, etc) aquí se añaden.
+        // 4) Finalmente borrar el usuario
+        userRepository.deleteById(userId);
+    }
+}
+ 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\service\PatientDeletionService.java ===== 
+package es.marta.tfg.carescan.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import es.marta.tfg.carescan.model.Consulta;
+import es.marta.tfg.carescan.repository.AnalisisIARepository;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
+import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
+import es.marta.tfg.carescan.repository.UserRepository;
+
+@Service
+public class PatientDeletionService {
+
+    private final UserRepository userRepository;
+    private final ConsultaRepository consultaRepository;
+    private final AnalisisIARepository analisisIARepository;
+    private final DoctorPatientAssignmentRepository assignmentRepository;
+
+    public PatientDeletionService(UserRepository userRepository,
+                                  ConsultaRepository consultaRepository,
+                                  AnalisisIARepository analisisIARepository,
+                                  DoctorPatientAssignmentRepository assignmentRepository) {
+        this.userRepository = userRepository;
+        this.consultaRepository = consultaRepository;
+        this.analisisIARepository = analisisIARepository;
+        this.assignmentRepository = assignmentRepository;
+    }
+
+    @Transactional
+    public void hardDeletePatient(Long patientId) {
+
+        // 1) Consultas del paciente (incluye radiografías porque están como bytes en Consulta)
+        List<Consulta> consultas = consultaRepository.findAllByPatientId(patientId);
+
+        // 2) AnalisisIA (si está en tabla separada y referencia a Consulta)
+        //    Borramos primero para evitar FK
+        if (!consultas.isEmpty()) {
+            analisisIARepository.deleteByConsultaIn(consultas);
+        }
+
+        // 3) Borrar consultas
+        consultaRepository.deleteAll(consultas);
+
+        // 4) Borrar asignaciones doctor-paciente (activas o históricas)
+        assignmentRepository.deleteByPatientId(patientId);
+
+        // 5) Finalmente borrar el paciente
+        userRepository.deleteById(patientId);
+    }
+} 
+===== C:\Users\marta\Documents\DOBLE_GRADO\4_carrera\TFG\WEB\TFG\src\main\java\es\marta\tfg\carescan\service\userService.java ===== 
+package es.marta.tfg.carescan.service;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+
+import es.marta.tfg.carescan.repository.UserRepository;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+
+import es.marta.tfg.carescan.security.jwt.AuthResponse;
+import es.marta.tfg.carescan.security.jwt.JwtTokenProvider;
+import es.marta.tfg.carescan.security.jwt.TokenType;
+
+
+@Service
+public class userService {
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+
+    public ResponseEntity<String> login(String name, String password, HttpServletResponse response) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(name, password)
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            return ResponseEntity.ok("Inicio de sesión exitoso");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Error de autenticación: " + e.getMessage());
+        }
+    }
+
+    public ResponseEntity<AuthResponse> logout(HttpServletResponse response) {
+        try {
+
+            Cookie refreshCookie = new Cookie(TokenType.REFRESH.cookieName, null);
+            refreshCookie.setHttpOnly(true);
+            refreshCookie.setPath("/");
+            refreshCookie.setMaxAge(0);
+            response.addCookie(refreshCookie);
+
+            Cookie accessCookie = new Cookie(TokenType.ACCESS.cookieName, null);
+            accessCookie.setHttpOnly(true);
+            accessCookie.setPath("/");
+            accessCookie.setMaxAge(0);
+            response.addCookie(accessCookie);
+
+            SecurityContextHolder.clearContext();
+
+            return ResponseEntity.ok(new AuthResponse(AuthResponse.Status.SUCCESS, "Logout successful"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new AuthResponse(AuthResponse.Status.FAILURE, "Logout failed", e.getMessage()));
+        }
+    }
+}
+ 

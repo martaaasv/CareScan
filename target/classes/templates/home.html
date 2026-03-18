@@ -12,61 +12,66 @@
 
     <div th:replace="fragments/header :: header"></div>
 
-    <main>
-        <div class="container">
+    <main class="home-main">
+        <div class="container home-container">
             <h2 th:text="#{home.welcome}">Bienvenido a CareScan</h2>
             <p th:text="#{home.subtitle}">Escanea, analiza y gestiona resultados medicos facilmente.</p>
 
-            <div sec:authorize="isAnonymous()">
+            <div class="home-section" sec:authorize="isAnonymous()">
                 <p th:text="#{home.login.prompt}">Inicia sesion para acceder a la plataforma.</p>
-                <a th:href="@{/login}"><button th:text="#{home.login.button}">Iniciar sesion</button></a>
+                <a class="home-action" th:href="@{/login}"><button class="btn btn-primary home-button" th:text="#{home.login.button}">Iniciar sesion</button></a>
             </div>
 
             <!-- PACIENTE -->
-            <div sec:authorize="hasRole('PACIENTE')">
+            <div class="home-section" sec:authorize="hasRole('PACIENTE')">
                 <h3 th:text="#{home.patient.area}">Zona de paciente</h3>
-                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong></p>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
                 <p th:text="#{home.patient.desc}">Puedes consultar tus resultados publicados.</p>
 
-                <a th:href="@{/paciente/results}">
-                    <button type="button" th:text="#{home.patient.cta}">Ver mis resultados</button>
+                <a class="home-action" th:href="@{/paciente/results}">
+                    <button type="button" class="btn btn-primary home-button" th:text="#{home.patient.cta}">Ver mis resultados</button>
                 </a>
             </div>
 
             <!-- MÉDICO -->
-            <div sec:authorize="hasRole('MEDICO')">
+            <div class="home-section" sec:authorize="hasRole('MEDICO')">
                 <h3 th:text="#{home.doctor.area}">Zona de medico</h3>
-                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong></p>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
                 <p th:text="#{home.doctor.desc}">Puedes consultar tus pacientes asignados y subir radiografias.</p>
 
-                <a th:href="@{/medico/patients}">
-                    <button type="button" th:text="#{home.doctor.cta}">Ir a mis pacientes</button>
+                <a class="home-action" th:href="@{/medico/patients}">
+                    <button type="button" class="btn btn-primary home-button" th:text="#{home.doctor.cta}">Ir a mis pacientes</button>
                 </a>
             </div>
 
             <!-- ADMIN HOSPITAL -->
-            <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
+            <div class="home-section" sec:authorize="hasRole('ADMIN_HOSPITAL')">
                 <h3 th:text="#{home.admin.hospital.area}">Administracion del hospital</h3>
-                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong></p>
-                <p th:text="#{home.admin.hospital.desc}">Desde aqui puedes dar de alta pacientes y asignarlos a medicos.</p>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
+                <p th:text="#{home.admin.hospital.desc}">Desde aqui puedes dar de alta pacientes y asignarlos a medicos.
+                </p>
 
-                <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
+                <a class="btn btn-primary home-link-button" th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar pacientes</a>
             </div>
 
             <!-- ADMIN IT -->
-            <div sec:authorize="hasRole('ADMIN_IT')">
+            <div class="home-section" sec:authorize="hasRole('ADMIN_IT')">
                 <h3 th:text="#{home.admin.it.area}">Panel de administracion IT</h3>
-                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong></p>
-                <p th:text="#{home.admin.it.desc}">Aqui puedes gestionar usuarios, ver estadisticas y administrar el sistema.</p>
+                <p><span th:text="#{common.hello}">Hola</span>, <strong><span sec:authentication="name"></span></strong>
+                </p>
+                <p th:text="#{home.admin.it.desc}">Aqui puedes gestionar usuarios, ver estadisticas y administrar el
+                    sistema.</p>
 
-                <a th:href="@{/admin/dashboard}">
-                    <button type="button" th:text="#{home.admin.it.cta}">Ir al panel de administrador IT</button>
+                <a class="home-action" th:href="@{/admin/dashboard}">
+                    <button type="button" class="btn btn-primary home-button" th:text="#{home.admin.it.cta}">Ir al panel de administrador IT</button>
                 </a>
             </div>
         </div>
     </main>
-
     <div th:replace="fragments/footer :: footer"></div>
-
 </body>
+
 </html>

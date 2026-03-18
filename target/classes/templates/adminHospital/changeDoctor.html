@@ -35,22 +35,6 @@
         </div>
     </main>
 
-    <!-- MODAL DE CONFIRMAR LOGOUT -->
-    <div id="logoutModal" class="modal-overlay">
-        <div class="modal">
-            <p>
-                <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
-                <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para
-                    continuar.</span>
-            </p>
-            <div class="modal-buttons">
-                <button type="button" class="btn-confirm" onclick="confirmLogout()" th:text="#{nav.logout}">Cerrar
-                    sesion</button>
-                <button type="button" class="btn-cancel" onclick="closeLogoutModal()"
-                    th:text="#{common.cancel}">Cancelar</button>
-            </div>
-        </div>
-    </div>
     <div th:replace="fragments/footer :: footer"></div>
 </body>
 

@@ -349,6 +349,7 @@ button {
 .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
     padding: 9px 18px;
     border-radius: var(--radius-sm);
@@ -360,6 +361,7 @@ button {
     cursor: pointer;
     transition: background .15s, transform .1s, box-shadow .15s;
     line-height: 1;
+    text-align: center;
 }
 
 .btn:active { transform: scale(.97); }
@@ -378,9 +380,8 @@ button {
 }
 
 .btn-outline {
-    background: transparent;
     color: var(--green-700);
-    border: 1.5px solid var(--green-600);
+    border: 1.5px solid var(--green-700);
 }
 
 .btn-outline:hover {
@@ -938,3 +939,113 @@ main.settings-main {
 }
 
 .settings-card-actions { margin-top: .8rem; }
+
+/* ── HOME ──────────────────────────────────────────────── */
+.home-main {
+    padding: 2rem 1rem 3rem;
+}
+
+.home-container {
+    text-align: center;
+}
+
+.home-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+}
+
+.home-section + .home-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.home-action {
+    display: inline-flex;
+    justify-content: center;
+}
+
+.home-button,
+.home-link-button {
+    min-width: 240px;
+}
+
+.home-link-button {
+    display: inline-flex;
+}
+
+/* ── LOGIN ─────────────────────────────────────────────── */
+.login-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1rem 3rem;
+}
+
+.hero {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.login-form {
+    width: 100%;
+    max-width: 520px;
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 2.5rem;
+}
+
+.login-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.login-form .form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1.2rem;
+}
+
+.login-form label {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: .45rem;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"] {
+    width: 100%;
+    padding: .9rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-family: var(--font-sans);
+}
+
+.login-form input[type="text"]:focus,
+.login-form input[type="password"]:focus {
+    outline: none;
+    border-color: var(--green-600);
+    box-shadow: 0 0 0 3px rgba(22,163,74,.15);
+}
+
+.login-form .btn {
+    width: 100%;
+    margin-top: .75rem;
+    padding: .95rem 1.2rem;
+    font-size: 1rem;
+}
+
+.login-close-button {
+    min-width: 220px;
+}

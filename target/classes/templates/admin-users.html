@@ -45,24 +45,21 @@
                             <form th:action="@{'/admin/users/' + ${u.id} + '/role'}" method="post"
                                 style="display:inline;">
                                 <select name="role">
-                                    <option th:value="ADMIN_IT" th:selected="${u.role.name() == 'ADMIN_IT'}">
-                                        ADMIN IT
-                                    </option>
+                                    <option th:value="ADMIN_IT" th:selected="${u.role.name() == 'ADMIN_IT'}"
+                                        th:text="#{role.admin_it}">ADMIN IT</option>
                                     <option th:value="ADMIN_HOSPITAL"
-                                        th:selected="${u.role.name() == 'ADMIN_HOSPITAL'}">
-                                        ADMIN HOSPITAL
-                                    </option>
-                                    <option th:value="MEDICO" th:selected="${u.role.name() == 'MEDICO'}">
-                                        MÉDICO
-                                    </option>
-                                    <option th:value="PACIENTE" th:selected="${u.role.name() == 'PACIENTE'}">
-                                        PACIENTE
-                                    </option>
+                                        th:selected="${u.role.name() == 'ADMIN_HOSPITAL'}"
+                                        th:text="#{role.admin_hospital}">ADMIN HOSPITAL</option>
+                                    <option th:value="MEDICO" th:selected="${u.role.name() == 'MEDICO'}"
+                                        th:text="#{role.medico}">MEDICO</option>
+                                    <option th:value="PACIENTE" th:selected="${u.role.name() == 'PACIENTE'}"
+                                        th:text="#{role.paciente}">PACIENTE</option>
                                 </select>
                                 <button type="submit" th:text="#{admin.users.role.update}">Actualizar rol</button>
                             </form>
                             <form th:action="@{'/admin/users/' + ${u.id} + '/hard-delete'}" method="post"
-                                onsubmit="return confirm('ELIMINAR DEFINITIVAMENTE este usuario borrara TODO lo relacionado (consultas, radiografias, asignaciones). Seguro?');"
+                                onsubmit="return confirm(this.dataset.confirm);"
+                                th:attr="data-confirm=#{admin.users.delete.confirm}"
                                 style="display:inline;">
                                 <button type="submit" class="btn-delete" style="color:red;">
                                     <span th:text="#{common.delete}">Eliminar</span>

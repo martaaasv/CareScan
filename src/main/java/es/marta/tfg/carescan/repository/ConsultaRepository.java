@@ -23,4 +23,5 @@ public interface ConsultaRepository extends JpaRepository<Consulta, Long> {
     List<Consulta> findAllByPatientId(Long patientId);
 
     List<Consulta> findAllByUserId(Long userId);
+
 }

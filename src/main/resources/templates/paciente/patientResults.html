@@ -32,7 +32,8 @@
                     <tr th:each="c : ${consultas}">
                         <td th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy HH:mm')}">25/02/2026 13:00</td>
                         <td th:text="${c.analisisIA.probabilidad}"> %</td>
-                        <td th:text="${c.analisisIA.etiqueta}"></td>
+                        <td
+                            th:text="${c.analisisIA.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${c.analisisIA.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${c.analisisIA.etiqueta})"></td>
                     </tr>
                 </tbody>
             </table>

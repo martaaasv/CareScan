@@ -185,7 +185,9 @@ public class MedicoController {
     }
 
     @PostMapping("/consultas/{consultaId}/publish")
-    public String publishResult(@PathVariable Long consultaId, Authentication auth) {
+    public String publishResult(@PathVariable Long consultaId,
+            @RequestParam(value = "redirectTo", required = false) String redirectTo,
+            Authentication auth) {
 
         if (auth == null) {
             return "redirect:/login";
@@ -209,6 +211,10 @@ public class MedicoController {
         if (analisis != null) {
             analisis.setVisiblePaciente(true);
             analisisIARepository.save(analisis);
+        }
+
+        if (redirectTo != null && redirectTo.startsWith("/medico/")) {
+            return "redirect:" + redirectTo;
         }
 
         return "redirect:/medico/consultas/" + consultaId + "/results";

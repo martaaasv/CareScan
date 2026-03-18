@@ -18,7 +18,8 @@
         </p>
 
         <p th:if="${analisis != null}">
-            <strong th:text="#{common.result} + ':'">Resultado:</strong> <span th:text="${analisis.etiqueta}">—</span>
+            <strong th:text="#{common.result} + ':'">Resultado:</strong> <span
+                th:text="${analisis.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${analisis.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${analisis.etiqueta})">—</span>
             &nbsp; | &nbsp;
             <strong th:text="#{common.probability} + ':'">Probabilidad:</strong> <span
                 th:text="${analisis.probabilidad}">—</span>
@@ -27,6 +28,17 @@
         <div style="margin:16px 0;">
             <img th:src="@{'/medico/consultas/' + ${consulta.id} + '/image'}" th:alt="#{common.radiography}"
                 style="max-width:100%; height:auto; border-radius:8px;" />
+        </div>
+
+        <div th:if="${analisis != null}" style="margin:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+            <form th:if="${!analisis.visiblePaciente}" th:action="@{/medico/consultas/{id}/publish(id=${consulta.id})}"
+                method="post" style="margin:0;">
+                <input type="hidden" name="redirectTo"
+                    th:value="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${consulta.id}}" />
+                <button type="submit" class="btn btn-primary" th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
+            </form>
+            <p th:if="${analisis.visiblePaciente}" style="margin:0;color:var(--green-700);font-weight:600;"
+                th:text="#{results.published.patient}">Resultado publicado al paciente</p>
         </div>
 
         <div style="margin-top:16px;">

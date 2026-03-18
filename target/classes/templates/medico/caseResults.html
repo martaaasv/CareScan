@@ -22,7 +22,8 @@
 
                 <div th:if="${consulta.analisisIA != null}">
                     <p><b th:text="#{common.probability} + ':'">Probabilidad:</b> <span th:text="${consulta.analisisIA.probabilidad}">—</span></p>
-                    <p><b th:text="#{common.label} + ':'">Etiqueta:</b> <span th:text="${consulta.analisisIA.etiqueta}">—</span></p>
+                    <p><b th:text="#{common.label} + ':'">Etiqueta:</b> <span
+                            th:text="${consulta.analisisIA.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${consulta.analisisIA.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${consulta.analisisIA.etiqueta})">—</span></p>
                     <p><b th:text="#{common.model} + ':'">Modelo:</b> <span th:text="${consulta.analisisIA.modeloVersion}">—</span></p>
                 </div>
 
@@ -30,6 +31,8 @@
 
                     <div th:if="${!consulta.analisisIA.visiblePaciente}">
                         <form th:action="@{/medico/consultas/{id}/publish(id=${consulta.id})}" method="post">
+                            <input type="hidden" name="redirectTo"
+                                th:value="@{'/medico/consultas/' + ${consulta.id} + '/results'}" />
                             <button type="submit" th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
                         </form>
                     </div>
@@ -50,6 +53,9 @@
 
 
             <a th:href="@{/medico/patients}" class="btn" th:text="#{common.back}">Volver</a>
+            <a th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${consulta.id}}" class="btn btn-outline">
+                <span th:text="#{medico.view.consultation.detail}">Ver detalle de la consulta</span>
+            </a>
 
 
         </div>

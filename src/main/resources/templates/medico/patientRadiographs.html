@@ -42,7 +42,7 @@
 
                         <td>
                             <span th:if="${c.analisisIA != null}"
-                                  th:text="${c.analisisIA.etiqueta}"
+                                  th:text="${c.analisisIA.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${c.analisisIA.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${c.analisisIA.etiqueta})"
                                   th:classappend="${c.analisisIA.etiqueta == 'POSITIVO'} ? 'badge badge-pos' : 'badge badge-neg'">
                                 NEGATIVO
                             </span>
@@ -52,14 +52,32 @@
                         <td class="prob" th:text="${c.analisisIA != null ? c.analisisIA.probabilidad : '—'}">0.33</td>
 
                         <td>
-                            <button type="button" class="btn btn-primary"
-                                th:attr="data-img=@{'/medico/consultas/' + ${c.id} + '/image'}"
-                                onclick="openImageModal(this)">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18M3.75 3h16.5A.75.75 0 0121 3.75v12a.75.75 0 01-.75.75H3.75A.75.75 0 013 15.75V3.75A.75.75 0 013.75 3z"/>
-                                </svg>
-                                <span th:text="#{medico.view.radiography}">Ver radiografia</span>
-                            </button>
+                            <div class="actionButtons">
+                                <button type="button" class="btn btn-primary"
+                                    th:attr="data-img=@{'/medico/consultas/' + ${c.id} + '/image'}"
+                                    onclick="openImageModal(this)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18M3.75 3h16.5A.75.75 0 0121 3.75v12a.75.75 0 01-.75.75H3.75A.75.75 0 013 15.75V3.75A.75.75 0 013.75 3z"/>
+                                    </svg>
+                                    <span th:text="#{medico.view.radiography}">Ver radiografia</span>
+                                </button>
+
+                                <a class="btn btn-outline"
+                                    th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${c.id}}">
+                                    <span th:text="#{medico.view.consultation.detail}">Ver detalle de la consulta</span>
+                                </a>
+
+                                <form th:if="${c.analisisIA != null and !c.analisisIA.visiblePaciente}"
+                                    th:action="@{/medico/consultas/{id}/publish(id=${c.id})}" method="post" style="margin:0;">
+                                    <input type="hidden" name="redirectTo"
+                                        th:value="@{'/medico/patients/' + ${patient.id} + '/radiografias'}" />
+                                    <button type="submit" class="btn btn-secondary"
+                                        th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
+                                </form>
+
+                                <span th:if="${c.analisisIA != null and c.analisisIA.visiblePaciente}"
+                                    class="badge statusActive" th:text="#{results.published.short}">Publicado</span>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

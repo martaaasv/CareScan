@@ -22,7 +22,6 @@
             </div>
         </div>
 
-        <!-- Empty state -->
         <div th:if="${#lists.isEmpty(patients)}" class="empty-state">
             <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor" stroke-width="1.5" style="color:var(--gray-300);margin-bottom:12px;">
@@ -32,7 +31,6 @@
             <p style="margin:0;" th:text="#{medico.patients.empty}">No tienes pacientes asignados.</p>
         </div>
 
-        <!-- Table -->
         <div th:if="${!#lists.isEmpty(patients)}" class="table-wrapper">
             <table class="styled-table">
                 <thead>
@@ -65,12 +63,7 @@
                         <td>
                             <a class="btn btn-outline btn-sm"
                                 th:href="@{'/medico/patients/' + ${p.id} + '/radiografias'}">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 20.25h18M3.75 3h16.5A.75.75 0 0121 3.75v12a.75.75 0 01-.75.75H3.75A.75.75 0 013 15.75V3.75A.75.75 0 013.75 3z" />
-                                </svg>
-                                <span th:text="#{medico.view.radiographies}">Ver radiografias</span>
+                                <span th:text="#{medico.view.radiographies}" style="font-weight:500;color:var(--gray-900);">Ver radiografias</span>
                             </a>
                         </td>
 

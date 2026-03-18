@@ -50,6 +50,7 @@ public class UserLoginService {
 
 		AuthResponse loginResponse = new AuthResponse(AuthResponse.Status.SUCCESS,
 				"Auth successful. Tokens are created in cookie.");
+				loginResponse.setToken(newAccessToken);
 		return ResponseEntity.ok().headers(responseHeaders).body(loginResponse);
 	}
 
@@ -63,6 +64,7 @@ public class UserLoginService {
 
 			AuthResponse loginResponse = new AuthResponse(AuthResponse.Status.SUCCESS,
 					"Auth successful. Tokens are created in cookie.");
+					loginResponse.setToken(newAccessToken);
 			return ResponseEntity.ok().body(loginResponse);
 
 		} catch (Exception e) {

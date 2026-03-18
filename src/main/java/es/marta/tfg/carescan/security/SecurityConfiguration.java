@@ -65,7 +65,7 @@ public class SecurityConfiguration {
                 })
                 )
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/users/login", "/api/users/register", "/api/users/logout").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/users/login", "/api/users/register", "/api/users/logout", "/api/users/refresh").permitAll()
                 .requestMatchers("/api/medico/**").hasRole("MEDICO")
                 .anyRequest().authenticated()
                 )
@@ -109,6 +109,9 @@ public class SecurityConfiguration {
                 .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID", "AuthToken", "RefreshToken")
                 .permitAll()
                 );
 
