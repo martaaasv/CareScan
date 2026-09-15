@@ -35,9 +35,9 @@ public class SampleData {
                 userRepository.save(adminH);
 
                 User user1 = new User();
-                user1.setName("MedicoPrueba");
-                user1.setEmail("medico@gmail.com");
-                user1.setPassword(new BCryptPasswordEncoder().encode("1234medico"));
+                user1.setName("Carla");
+                user1.setEmail("carla@carescan.com");
+                user1.setPassword(new BCryptPasswordEncoder().encode("1234carla"));
                 user1.setRole(Role.MEDICO);
                 userRepository.save(user1);
 

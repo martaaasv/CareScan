@@ -19,6 +19,22 @@
             <div th:if="${mensajeExito}" class="alert-success" th:text="${mensajeExito}"></div>
             <div th:if="${mensajeError}" class="alert-error" th:text="${mensajeError}"></div>
 
+            <div class="card" style="padding:16px;margin-bottom:20px;">
+                <form th:action="@{/admin/users}" method="get" class="actionButtons" style="align-items:flex-end;">
+                    <div class="form-group" style="min-width:220px;margin:0;">
+                        <label for="roleFilter" th:text="#{admin.users.filter.role}">Filtrar por rol</label>
+                        <select id="roleFilter" name="role">
+                            <option value="" th:selected="${selectedRole == ''}" th:text="#{admin.users.filter.all}">Todos</option>
+                            <option value="PACIENTE" th:selected="${selectedRole == 'PACIENTE'}" th:text="#{role.paciente}">PACIENTE</option>
+                            <option value="MEDICO" th:selected="${selectedRole == 'MEDICO'}" th:text="#{role.medico}">MEDICO</option>
+                            <option value="ADMIN_HOSPITAL" th:selected="${selectedRole == 'ADMIN_HOSPITAL'}" th:text="#{role.admin_hospital}">ADMIN HOSPITAL</option>
+                            <option value="ADMIN_IT" th:selected="${selectedRole == 'ADMIN_IT'}" th:text="#{role.admin_it}">ADMIN IT</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" th:text="#{common.filter}">Filtrar</button>
+                </form>
+            </div>
+
             <div th:if="${#lists.isEmpty(users)}" class="empty-state">
                 <p th:text="#{admin.users.empty}">No hay usuarios registrados.</p>
             </div>
@@ -30,6 +46,7 @@
                         <th th:text="#{common.name}">Nombre</th>
                         <th th:text="#{common.email}">Email</th>
                         <th th:text="#{common.role}">Rol</th>
+                        <th th:text="#{common.status}">Estado</th>
                         <th th:text="#{admin.dashboard.consultas.count}">N consultas</th>
                         <th th:text="#{common.actions}">Acciones</th>
                     </tr>
@@ -40,36 +57,67 @@
                         <td th:text="${u.name}">Nombre</td>
                         <td th:text="${u.email}">email@example.com</td>
                         <td th:text="${u.role}">ROL</td>
+                        <td>
+                            <span th:if="${u.blocked}" class="badge statusInactive" th:text="#{status.blocked}">BLOQUEADO</span>
+                            <span th:if="${!u.blocked and !u.active}" class="badge statusInactive" th:text="#{status.inactive}">INACTIVO</span>
+                            <span th:if="${!u.blocked and u.active and u.role.name() == 'PACIENTE' and u.estado != null and u.estado.name() == 'INACTIVO'}"
+                                class="badge statusInactive" th:text="#{status.inactive}">INACTIVO</span>
+                            <span th:if="${!u.blocked and u.active and !(u.role.name() == 'PACIENTE' and u.estado != null and u.estado.name() == 'INACTIVO')}"
+                                class="badge statusActive" th:text="#{status.active}">ACTIVO</span>
+                        </td>
                         <td th:text="${consultasCount[u.id]}">0</td>
                         <td>
-                            <form th:action="@{'/admin/users/' + ${u.id} + '/role'}" method="post"
-                                style="display:inline;">
-                                <select name="role">
-                                    <option th:value="ADMIN_IT" th:selected="${u.role.name() == 'ADMIN_IT'}"
-                                        th:text="#{role.admin_it}">ADMIN IT</option>
-                                    <option th:value="ADMIN_HOSPITAL"
-                                        th:selected="${u.role.name() == 'ADMIN_HOSPITAL'}"
-                                        th:text="#{role.admin_hospital}">ADMIN HOSPITAL</option>
-                                    <option th:value="MEDICO" th:selected="${u.role.name() == 'MEDICO'}"
-                                        th:text="#{role.medico}">MEDICO</option>
-                                    <option th:value="PACIENTE" th:selected="${u.role.name() == 'PACIENTE'}"
-                                        th:text="#{role.paciente}">PACIENTE</option>
-                                </select>
-                                <button type="submit" th:text="#{admin.users.role.update}">Actualizar rol</button>
-                            </form>
-                            <form th:action="@{'/admin/users/' + ${u.id} + '/hard-delete'}" method="post"
-                                onsubmit="return confirm(this.dataset.confirm);"
-                                th:attr="data-confirm=#{admin.users.delete.confirm}"
-                                style="display:inline;">
-                                <button type="submit" class="btn-delete" style="color:red;">
-                                    <span th:text="#{common.delete}">Eliminar</span>
-                                </button>
-                            </form>
+                            <div class="actionButtons">
+                                <form th:action="@{'/admin/users/' + ${u.id} + '/role'}" method="post">
+                                    <select name="role">
+                                        <option th:value="ADMIN_IT" th:selected="${u.role.name() == 'ADMIN_IT'}"
+                                            th:text="#{role.admin_it}">ADMIN IT</option>
+                                        <option th:value="ADMIN_HOSPITAL"
+                                            th:selected="${u.role.name() == 'ADMIN_HOSPITAL'}"
+                                            th:text="#{role.admin_hospital}">ADMIN HOSPITAL</option>
+                                        <option th:value="MEDICO" th:selected="${u.role.name() == 'MEDICO'}"
+                                            th:text="#{role.medico}">MEDICO</option>
+                                        <option th:value="PACIENTE" th:selected="${u.role.name() == 'PACIENTE'}"
+                                            th:text="#{role.paciente}">PACIENTE</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm" th:text="#{admin.users.role.update}">Actualizar rol</button>
+                                </form>
 
+                                <form th:if="${!u.blocked}" th:action="@{'/admin/users/' + ${u.id} + '/block'}" method="post">
+                                    <select name="blockType">
+                                        <option value="1m" th:text="#{admin.users.block.1m}">Bloquear 1 minuto</option>
+                                        <option value="1d" th:text="#{admin.users.block.1d}">Bloquear 1 dia</option>
+                                        <option value="7d" th:text="#{admin.users.block.7d}">Bloquear 7 dias</option>
+                                        <option value="manual" th:text="#{admin.users.block.manual}">Bloquear manualmente</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-danger btn-sm" th:text="#{admin.users.block.submit}">Bloquear</button>
+                                </form>
+
+                                <form th:if="${u.blocked}" th:action="@{'/admin/users/' + ${u.id} + '/unblock'}" method="post">
+                                    <button type="submit" class="btn btn-primary btn-sm" th:text="#{admin.users.unblock}">Desbloquear</button>
+                                </form>
+
+                                <form th:action="@{'/admin/users/' + ${u.id} + '/reset-password'}" method="post">
+                                    <button type="submit" class="btn btn-primary btn-sm" th:text="#{admin.users.reset.password}">Resetear contrasena</button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 </tbody>
             </table>
+
+            <div th:if="${tempPassword}" class="modal-overlay" style="display:flex;">
+                <div class="modal" style="max-width:420px;">
+                    <div class="modal-header">
+                        <h3 th:text="#{admin.users.reset.password.modal.title}">Contrasena temporal generada</h3>
+                    </div>
+                    <div class="modal-body">
+                        <p th:text="#{admin.users.reset.password.modal.text}">Comparte esta contrasena temporal con el usuario.</p>
+                        <p><strong th:text="#{common.email} + ':'">Email:</strong> <span th:text="${resetPasswordEmail}">usuario@correo.com</span></p>
+                        <p><strong th:text="#{new.patient.modal.temp.password} + ':'">Contrasena temporal:</strong> <span th:text="${tempPassword}">abc123</span></p>
+                    </div>
+                </div>
+            </div>
         </div>
     </main2>
     <div th:replace="fragments/footer :: footer"></div>

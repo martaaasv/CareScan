@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 
 @Entity
@@ -35,6 +36,16 @@ public class AnalisisIA {
 
     @Column(nullable = false)
     private boolean visiblePaciente = false;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String comentarioMedico;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] heatmapImagen;
+
+    private String heatmapContentType;
 
     public AnalisisIA() {
     }
@@ -89,6 +100,30 @@ public class AnalisisIA {
 
     public void setVisiblePaciente(boolean visiblePaciente) {
         this.visiblePaciente = visiblePaciente;
+    }
+
+    public String getComentarioMedico() {
+        return comentarioMedico;
+    }
+
+    public void setComentarioMedico(String comentarioMedico) {
+        this.comentarioMedico = comentarioMedico;
+    }
+
+    public byte[] getHeatmapImagen() {
+        return heatmapImagen;
+    }
+
+    public void setHeatmapImagen(byte[] heatmapImagen) {
+        this.heatmapImagen = heatmapImagen;
+    }
+
+    public String getHeatmapContentType() {
+        return heatmapContentType;
+    }
+
+    public void setHeatmapContentType(String heatmapContentType) {
+        this.heatmapContentType = heatmapContentType;
     }
 
 }

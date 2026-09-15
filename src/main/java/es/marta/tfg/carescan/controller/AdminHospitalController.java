@@ -2,6 +2,7 @@ package es.marta.tfg.carescan.controller;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,12 +21,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import es.marta.tfg.carescan.model.DoctorPatientAssignment;
+import es.marta.tfg.carescan.model.Consulta;
 import es.marta.tfg.carescan.model.Estado;
 import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
+import es.marta.tfg.carescan.repository.ConsultaRepository;
 import es.marta.tfg.carescan.repository.UserRepository;
-import es.marta.tfg.carescan.service.HardDeleteUserService;
 
 @Controller
 @RequestMapping("/admin-hospital")
@@ -40,11 +42,15 @@ public class AdminHospitalController {
     @Autowired
     private DoctorPatientAssignmentRepository assignmentRepository;
 
+    @Autowired
+    private ConsultaRepository consultaRepository;
+
 
     private boolean isSelectablePatient(User u) {
         return u != null
                 && u.getRole() == Role.PACIENTE
-                && u.getEstado() != Estado.INACTIVO;
+                && u.getEstado() != Estado.INACTIVO
+                && !u.isBlocked();
     }
 
     @GetMapping("/patients/new")
@@ -64,6 +70,7 @@ public class AdminHospitalController {
     @PostMapping("/patients")
     public String createPatient(@RequestParam("name") String name,
             @RequestParam("email") String email,
+            @RequestParam("role") String roleName,
             RedirectAttributes ra) {
 
         if (userRepository.findByEmail(email).isPresent()) {
@@ -71,21 +78,41 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/patients/new";
         }
 
+        Role role;
+        try {
+            role = Role.valueOf(roleName);
+        } catch (IllegalArgumentException ex) {
+            ra.addFlashAttribute("error", "Rol no válido.");
+            return "redirect:/admin-hospital/patients/new";
+        }
+
+        if (role != Role.PACIENTE && role != Role.MEDICO) {
+            ra.addFlashAttribute("error", "Solo se pueden crear usuarios con rol PACIENTE o MEDICO.");
+            return "redirect:/admin-hospital/patients/new";
+        }
+
         String tempPassword = generateTempPassword(10);
 
-        User patient = new User();
-        patient.setName(name);
-        patient.setEmail(email);
-        patient.setRole(Role.PACIENTE);
-        patient.setPassword(passwordEncoder.encode(tempPassword));
-        patient.setTemporalPassword(true);
-        patient.setEstado(Estado.ESPERANDO_ASIGNACION);
+        User user = new User();
+        user.setName(name);
+        user.setEmail(email);
+        user.setRole(role);
+        user.setPassword(passwordEncoder.encode(tempPassword));
+        user.setTemporalPassword(true);
+        user.setActive(true);
 
-        userRepository.save(patient);
+        if (role == Role.PACIENTE) {
+            user.setEstado(Estado.ESPERANDO_ASIGNACION);
+        } else {
+            user.setEstado(null);
+        }
 
-        ra.addFlashAttribute("success", "Paciente creado correctamente.");
+        userRepository.save(user);
+
+        ra.addFlashAttribute("success", "Usuario creado correctamente.");
         ra.addFlashAttribute("tempPassword", tempPassword);
         ra.addFlashAttribute("createdEmail", email);
+        ra.addFlashAttribute("createdRole", role.name());
 
         return "redirect:/admin-hospital/patients/new";
     }
@@ -108,7 +135,10 @@ public class AdminHospitalController {
     @GetMapping("/assignments/new")
     public String newAssignmentForm(Model model, Authentication auth) {
 
-        List<User> doctors = userRepository.findAllByRole(Role.MEDICO);
+        List<User> doctors = userRepository.findAllByRole(Role.MEDICO)
+                .stream()
+                .filter(User::isActive)
+                .toList();
 
         // SOLO pacientes NO INACTIVOS (para el desplegable)
         List<User> patients = userRepository.findAllByRole(Role.PACIENTE)
@@ -144,6 +174,11 @@ public class AdminHospitalController {
 
         if (doctor.getRole() != Role.MEDICO) {
             ra.addFlashAttribute("error", "El usuario seleccionado como médico no es MEDICO.");
+            return "redirect:/admin-hospital/assignments/new";
+        }
+
+        if (!doctor.isActive()) {
+            ra.addFlashAttribute("error", "No se puede asignar pacientes a un medico INACTIVO.");
             return "redirect:/admin-hospital/assignments/new";
         }
 
@@ -204,6 +239,7 @@ public class AdminHospitalController {
         }
 
         List<User> patients = userRepository.findAllByRole(Role.PACIENTE);
+        List<User> doctors = userRepository.findAllByRole(Role.MEDICO);
 
         List<DoctorPatientAssignment> activeAssignments = assignmentRepository.findByPatientInAndActiveTrue(patients);
 
@@ -213,6 +249,7 @@ public class AdminHospitalController {
         }
 
         model.addAttribute("patients", patients);
+        model.addAttribute("doctors", doctors);
         model.addAttribute("patientDoctorMap", patientDoctorMap);
 
         return "adminHospital/patientManagement";
@@ -249,6 +286,90 @@ public class AdminHospitalController {
         return "redirect:/admin-hospital/patients";
     }
 
+    @GetMapping("/patients/{patientId}/reactivate")
+    public String reactivatePatientForm(@PathVariable Long patientId, Model model, Authentication auth,
+            RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        if (patient.getEstado() != Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "Solo se puede reactivar un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        List<User> doctors = userRepository.findAllByRole(Role.MEDICO)
+                .stream()
+                .filter(User::isActive)
+                .toList();
+
+        model.addAttribute("patient", patient);
+        model.addAttribute("doctors", doctors);
+
+        if (auth != null) {
+            userRepository.findByEmail(auth.getName()).ifPresent(admin -> {
+                model.addAttribute("userId", admin.getId());
+                model.addAttribute("username", admin.getName());
+            });
+        }
+
+        return "adminHospital/reactivatePatient";
+    }
+
+    @PostMapping("/patients/{patientId}/reactivate")
+    public String reactivatePatient(@PathVariable Long patientId,
+            @RequestParam("doctorId") Long doctorId,
+            RedirectAttributes ra) {
+
+        User patient = userRepository.findById(patientId).orElse(null);
+
+        if (patient == null || patient.getRole() != Role.PACIENTE) {
+            ra.addFlashAttribute("error", "Paciente no encontrado.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        if (patient.getEstado() != Estado.INACTIVO) {
+            ra.addFlashAttribute("error", "Solo se puede reactivar un paciente INACTIVO.");
+            return "redirect:/admin-hospital/patients";
+        }
+
+        User doctor = userRepository.findById(doctorId).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            ra.addFlashAttribute("error", "Medico no encontrado.");
+            return "redirect:/admin-hospital/patients/" + patientId + "/reactivate";
+        }
+
+        if (!doctor.isActive()) {
+            ra.addFlashAttribute("error", "No se puede asignar pacientes a un medico INACTIVO.");
+            return "redirect:/admin-hospital/patients/" + patientId + "/reactivate";
+        }
+
+        Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
+        if (activeAssignmentOpt.isPresent()) {
+            DoctorPatientAssignment activeAssignment = activeAssignmentOpt.get();
+            activeAssignment.setActive(false);
+            activeAssignment.setEndDate(LocalDateTime.now());
+            assignmentRepository.save(activeAssignment);
+        }
+
+        DoctorPatientAssignment newAssign = new DoctorPatientAssignment();
+        newAssign.setDoctor(doctor);
+        newAssign.setPatient(patient);
+        newAssign.setStartDate(LocalDateTime.now());
+        newAssign.setActive(true);
+        assignmentRepository.save(newAssign);
+
+        patient.setEstado(Estado.ACTIVO);
+        userRepository.save(patient);
+
+        ra.addFlashAttribute("success", "Paciente reactivado correctamente.");
+        return "redirect:/admin-hospital/patients";
+    }
+
     @GetMapping("/patients/{patientId}/changeDoctor")
     public String changeDoctorForm(@PathVariable Long patientId, Model model, Authentication auth, RedirectAttributes ra) {
 
@@ -265,7 +386,10 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/patients";
         }
 
-        List<User> doctors = userRepository.findAllByRole(Role.MEDICO);
+        List<User> doctors = userRepository.findAllByRole(Role.MEDICO)
+                .stream()
+                .filter(User::isActive)
+                .toList();
 
         model.addAttribute("patient", patient);
         model.addAttribute("doctors", doctors);
@@ -304,6 +428,11 @@ public class AdminHospitalController {
             return "redirect:/admin-hospital/patients/" + patientId + "/changeDoctor";
         }
 
+        if (!doctor.isActive()) {
+            ra.addFlashAttribute("error", "No se puede asignar pacientes a un medico INACTIVO.");
+            return "redirect:/admin-hospital/patients/" + patientId + "/changeDoctor";
+        }
+
         Optional<DoctorPatientAssignment> activeAssignmentOpt = assignmentRepository.findByPatientAndActiveTrue(patient);
         if (activeAssignmentOpt.isPresent()) {
             DoctorPatientAssignment a = activeAssignmentOpt.get();
@@ -325,5 +454,95 @@ public class AdminHospitalController {
         return "redirect:/admin-hospital/patients";
     }
 
-    
+    @PostMapping("/doctors/{doctorId}/deactivate")
+    public String deactivateDoctor(@PathVariable Long doctorId, RedirectAttributes ra) {
+
+        User doctor = userRepository.findById(doctorId).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            ra.addFlashAttribute("error", "Medico no encontrado.");
+            return "redirect:/admin-hospital/patients?tab=doctors";
+        }
+
+        if (!doctor.isActive()) {
+            ra.addFlashAttribute("error", "El medico ya esta INACTIVO.");
+            return "redirect:/admin-hospital/patients?tab=doctors";
+        }
+
+        List<User> availableDoctors = userRepository.findAllByRole(Role.MEDICO)
+                .stream()
+                .filter(User::isActive)
+                .filter(d -> !d.getId().equals(doctor.getId()))
+                .toList();
+
+        List<DoctorPatientAssignment> currentAssignments = assignmentRepository.findByDoctorAndActiveTrue(doctor)
+                .stream()
+                .filter(a -> a.getPatient() != null && a.getPatient().getEstado() != Estado.INACTIVO)
+                .toList();
+
+        if (!currentAssignments.isEmpty() && availableDoctors.isEmpty()) {
+            ra.addFlashAttribute("error",
+                    "No se puede dar de baja al medico porque no hay otros medicos activos para reasignar sus pacientes.");
+            return "redirect:/admin-hospital/patients?tab=doctors";
+        }
+
+        List<DoctorPatientAssignment> assignmentsToSave = new ArrayList<>();
+        List<Consulta> consultasToSave = new ArrayList<>();
+        int doctorIndex = 0;
+
+        for (DoctorPatientAssignment assignment : currentAssignments) {
+            User newDoctor = availableDoctors.get(doctorIndex % availableDoctors.size());
+            User patient = assignment.getPatient();
+
+            assignment.setActive(false);
+            assignment.setEndDate(LocalDateTime.now());
+            assignmentsToSave.add(assignment);
+
+            DoctorPatientAssignment newAssignment = new DoctorPatientAssignment();
+            newAssignment.setDoctor(newDoctor);
+            newAssignment.setPatient(patient);
+            newAssignment.setStartDate(LocalDateTime.now());
+            newAssignment.setActive(true);
+            assignmentsToSave.add(newAssignment);
+
+            List<Consulta> consultas = consultaRepository.findByUserAndPatientOrderByFechaHoraDesc(doctor, patient);
+            for (Consulta consulta : consultas) {
+                consulta.setUser(newDoctor);
+                consultasToSave.add(consulta);
+            }
+
+            doctorIndex++;
+        }
+
+        assignmentRepository.saveAll(assignmentsToSave);
+        consultaRepository.saveAll(consultasToSave);
+
+        doctor.setActive(false);
+        userRepository.save(doctor);
+
+        ra.addFlashAttribute("success",
+                "Medico dado de baja correctamente. Sus pacientes se han redistribuido entre los medicos activos.");
+        return "redirect:/admin-hospital/patients?tab=doctors";
+    }
+
+    @PostMapping("/doctors/{doctorId}/reactivate")
+    public String reactivateDoctor(@PathVariable Long doctorId, RedirectAttributes ra) {
+
+        User doctor = userRepository.findById(doctorId).orElse(null);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            ra.addFlashAttribute("error", "Medico no encontrado.");
+            return "redirect:/admin-hospital/patients?tab=doctors";
+        }
+
+        if (doctor.isActive()) {
+            ra.addFlashAttribute("error", "El medico ya esta ACTIVO.");
+            return "redirect:/admin-hospital/patients?tab=doctors";
+        }
+
+        doctor.setActive(true);
+        userRepository.save(doctor);
+
+        ra.addFlashAttribute("success", "Medico reactivado correctamente. No se le han asignado pacientes automaticamente.");
+        return "redirect:/admin-hospital/patients?tab=doctors";
+    }
+
 }

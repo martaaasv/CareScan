@@ -6,6 +6,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import es.marta.tfg.carescan.model.Estado;
+import es.marta.tfg.carescan.model.Role;
 import es.marta.tfg.carescan.model.User;
 import es.marta.tfg.carescan.repository.UserRepository;
 
@@ -21,11 +23,21 @@ public class RepositoryUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
 
+        if (user.getBlockedUntil() != null && !user.isBlockedManually()
+                && !user.getBlockedUntil().isAfter(java.time.LocalDateTime.now())) {
+            user.setBlockedUntil(null);
+            userRepository.save(user);
+        }
+
+        boolean enabled = user.isActive()
+                && !user.isBlocked()
+                && !(user.getRole() == Role.PACIENTE && user.getEstado() == Estado.INACTIVO);
  
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
-                .roles(user.getRole().name())  
+                .roles(user.getRole().name())
+                .disabled(!enabled)
                 .build();
     }
 }

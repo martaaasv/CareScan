@@ -36,7 +36,7 @@
                     <tr th:each="c : ${consultas}">
                         <td th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy HH:mm')}">--</td>
                         <td th:text="${c.nombreArchivo}">--</td>
-                        <td th:text="${c.resultado}">--</td>
+                        <td th:text="${c.analisisIA != null ? @analysisView.displayLabel(c.analisisIA.etiqueta) : c.resultado}">--</td>
                         <td>
                             <a th:href="@{'/upload/consulta/' + ${c.id} + '/imagen'}" target="_blank" rel="noopener">
                                 <img th:src="@{'/upload/consulta/' + ${c.id} + '/imagen'}" th:alt="#{history.image.alt}"

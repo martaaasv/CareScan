@@ -22,6 +22,10 @@
             <h2><span th:text="#{patient.radiographs.of}">Radiografias de</span> <span th:text="${patient.name}">Paciente</span></h2>
         </div>
 
+        <div th:if="${!canInteractWithPatient}" class="alert alertInfo">
+            <span th:text="#{medico.inactive.read.only}">El paciente esta inactivo. Solo puedes consultar su historial.</span>
+        </div>
+
         <div th:if="${#lists.isEmpty(consultas)}" class="empty-state">
             <p th:text="#{patient.radiographs.empty}">No hay radiografias registradas para este paciente.</p>
         </div>
@@ -42,14 +46,14 @@
 
                         <td>
                             <span th:if="${c.analisisIA != null}"
-                                  th:text="${c.analisisIA.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${c.analisisIA.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${c.analisisIA.etiqueta})"
-                                  th:classappend="${c.analisisIA.etiqueta == 'POSITIVO'} ? 'badge badge-pos' : 'badge badge-neg'">
-                                NEGATIVO
+                                  th:text="${@analysisView.displayLabel(c.analisisIA.etiqueta)}"
+                                  th:class="${@analysisView.badgeClass(c.analisisIA.etiqueta)}">
+                                Glioma
                             </span>
                             <span th:if="${c.analisisIA == null}" class="badge badge-neutral">—</span>
                         </td>
 
-                        <td class="prob" th:text="${c.analisisIA != null ? c.analisisIA.probabilidad : '—'}">0.33</td>
+                        <td class="prob" th:text="${c.analisisIA != null ? @analysisView.formatProbability(c.analisisIA.probabilidad) : '—'}">82.00%</td>
 
                         <td>
                             <div class="actionButtons">
@@ -67,13 +71,19 @@
                                     <span th:text="#{medico.view.consultation.detail}">Ver detalle de la consulta</span>
                                 </a>
 
-                                <form th:if="${c.analisisIA != null and !c.analisisIA.visiblePaciente}"
-                                    th:action="@{/medico/consultas/{id}/publish(id=${c.id})}" method="post" style="margin:0;">
-                                    <input type="hidden" name="redirectTo"
-                                        th:value="@{'/medico/patients/' + ${patient.id} + '/radiografias'}" />
-                                    <button type="submit" class="btn btn-secondary"
-                                        th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
-                                </form>
+                                <button th:if="${canInteractWithPatient and c.analisisIA != null}"
+                                    type="button"
+                                    class="btn btn-outline"
+                                    th:attr="data-edit-url=@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${c.id} + '/edit'},data-published=${c.analisisIA.visiblePaciente}"
+                                    onclick="handleEditConsultation(this)">
+                                    <span th:text="#{medico.edit.consultation}">Editar consulta</span>
+                                </button>
+
+                                <a th:if="${canInteractWithPatient and c.analisisIA != null and !c.analisisIA.visiblePaciente}"
+                                    class="btn btn-secondary"
+                                    th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${c.id}}">
+                                    <span th:text="#{results.publish.with.comment}">Anadir comentario y publicar</span>
+                                </a>
 
                                 <span th:if="${c.analisisIA != null and c.analisisIA.visiblePaciente}"
                                     class="badge statusActive" th:text="#{results.published.short}">Publicado</span>
@@ -96,7 +106,7 @@
 
     <!-- MODAL IMAGEN -->
     <div id="imgModal" class="modal-overlay">
-        <div class="modal">
+        <div class="modal modal-image">
             <div class="modal-header">
                 <h3 th:text="#{common.radiography}">Radiografia</h3>
                 <button type="button" class="btn-close" onclick="closeImageModal()" th:aria-label="#{common.close}">
@@ -105,13 +115,56 @@
                     </svg>
                 </button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body modal-body-image">
                 <img id="imgModalContent" src="" th:alt="#{common.radiography}" />
             </div>
         </div>
     </div>
 
+    <div id="editConfirmModal" class="modal-overlay">
+        <div class="modal modal-confirm">
+            <div class="modal-confirm-icon">
+                <span>!</span>
+            </div>
+            <div class="modal-confirm-content">
+                <span class="modal-confirm-kicker" th:text="#{medico.edit.consultation}">Editar consulta</span>
+                <h3 th:text="#{edit.consultation.published.warning.title}">Editar consulta publicada</h3>
+                <p th:text="#{edit.consultation.published.warning.text}">
+                    Si editas la consulta, el resultado dejara de estar visible para el paciente hasta que vuelvas a publicarlo.
+                </p>
+            </div>
+            <div class="modal-confirm-actions">
+                <button type="button" id="editConfirmAccept" class="btn-confirm" th:text="#{common.accept}">Aceptar</button>
+                <button type="button" class="btn-cancel" onclick="closeEditConfirmModal()" th:text="#{common.cancel}">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let pendingEditUrl = null;
+
+        function handleEditConsultation(btn) {
+            const editUrl = btn.getAttribute("data-edit-url");
+            const isPublished = btn.getAttribute("data-published") === "true";
+
+            if (!isPublished) {
+                window.location.href = editUrl;
+                return;
+            }
+
+            pendingEditUrl = editUrl;
+            document.getElementById("editConfirmModal").style.display = "flex";
+        }
+
+        function closeEditConfirmModal() {
+            pendingEditUrl = null;
+            document.getElementById("editConfirmModal").style.display = "none";
+        }
+
+        document.getElementById("editConfirmAccept").addEventListener("click", function () {
+            if (pendingEditUrl) window.location.href = pendingEditUrl;
+        });
+
         function openImageModal(btn) {
             const url = btn.getAttribute("data-img");
             document.getElementById("imgModalContent").src = url;
@@ -127,8 +180,15 @@
             if (e.target === this) closeImageModal();
         });
 
+        document.getElementById("editConfirmModal").addEventListener("click", function (e) {
+            if (e.target === this) closeEditConfirmModal();
+        });
+
         document.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") closeImageModal();
+            if (e.key === "Escape") {
+                closeImageModal();
+                closeEditConfirmModal();
+            }
         });
     </script>
 

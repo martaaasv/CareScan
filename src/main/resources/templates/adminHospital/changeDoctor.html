@@ -11,14 +11,14 @@
 <body>
     <div th:replace="fragments/header :: header"></div>
 
-    <main>
-        <div class="container">
+    <main class="pageWrapper">
+        <div class="container card-surface">
             <h2 th:text="#{change.doctor.title}">Cambiar medico</h2>
 
             <p><b th:text="#{common.patient} + ':'">Paciente:</b> <span th:text="${patient.name}"></span></p>
             <p><b th:text="#{common.email} + ':'">Email:</b> <span th:text="${patient.email}"></span></p>
 
-            <form th:action="@{/admin-hospital/patients/{id}/changeDoctor(id=${patient.id})}" method="post">
+            <form th:action="@{/admin-hospital/patients/{id}/changeDoctor(id=${patient.id})}" method="post" class="formGrid">
                 <label th:text="#{common.doctor} + ':'">Medico:</label>
                 <select name="doctorId" required>
                     <option value="" disabled selected th:text="#{common.select.doctor}">Selecciona un medico</option>
@@ -26,12 +26,11 @@
                     </option>
                 </select>
 
-                <br><br>
-                <button type="submit" th:text="#{common.save}">Guardar</button>
+                <div class="cardActions">
+                    <button type="submit" class="btnPrimary" th:text="#{common.save}">Guardar</button>
+                    <a th:href="@{/admin-hospital/patients}" class="btnSecondary doctorClassicLinkButton" th:text="#{common.back}">Volver</a>
+                </div>
             </form>
-
-            <br>
-            <a th:href="@{/admin-hospital/patients}"><button type="button" th:text="#{common.back}">Volver</button></a>
         </div>
     </main>
 

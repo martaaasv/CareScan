@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="#{title.patient.management}">Gestion de pacientes</title>
+    <title th:text="#{title.user.management}">Gestion de usuarios</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
@@ -14,94 +14,218 @@
 
     <main>
         <div class="container">
-            <h2 th:text="#{patient.management.title}">Gestion de pacientes</h2>
+            <h2 th:text="#{user.management.title}">Gestion de usuarios</h2>
 
             <p th:if="${error}" style="color:red;" th:text="${error}"></p>
             <p th:if="${success}" style="color:green;" th:text="${success}"></p>
 
-            <table class="tableFullWidth">
-                <thead>
-                    <tr>
-                        <th th:text="#{common.patient}">Paciente</th>
-                        <th th:text="#{common.email}">Email</th>
-                        <th th:text="#{common.status}">Estado</th>
-                        <th th:text="#{patient.management.assigned.doctor}">Medico asignado</th>
-                        <th th:text="#{common.actions}">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="p : ${patients}">
-                        <td th:text="${p.name}">Nombre</td>
-                        <td th:text="${p.email}">Email</td>
+            <div class="managementTabs" role="tablist">
+                <button type="button" class="managementTab active" data-target="patientsPanel"
+                    th:text="#{user.management.tab.patients}">Pacientes</button>
+                <button type="button" class="managementTab" data-target="doctorsPanel"
+                    th:text="#{user.management.tab.doctors}">Medicos</button>
+            </div>
 
-                        <td>
-                            <span
-                                th:if="${p.estado == null or p.estado == T(es.marta.tfg.carescan.model.Estado).ESPERANDO_ASIGNACION}"
-                                class="statusBadge statusWaiting" th:text="#{status.waiting.assignment}">ESPERANDO
-                                ASIGNACION</span>
+            <section id="patientsPanel" class="managementPanel active">
+                <table class="tableFullWidth">
+                    <thead>
+                        <tr>
+                            <th th:text="#{common.patient}">Paciente</th>
+                            <th th:text="#{common.email}">Email</th>
+                            <th th:text="#{common.status}">Estado</th>
+                            <th th:text="#{patient.management.assigned.doctor}">Medico asignado</th>
+                            <th th:text="#{common.actions}">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="p : ${patients}">
+                            <td th:text="${p.name}">Nombre</td>
+                            <td th:text="${p.email}">Email</td>
 
-                            <span
-                                th:if="${p.estado != null and p.estado == T(es.marta.tfg.carescan.model.Estado).ACTIVO}"
-                                class="statusBadge statusActive" th:text="#{status.active}">ACTIVO</span>
+                            <td>
+                                <span
+                                    th:if="${p.estado == null or p.estado.name() == 'ESPERANDO_ASIGNACION'}"
+                                    class="statusBadge statusWaiting" th:text="#{status.waiting.assignment}">ESPERANDO
+                                    ASIGNACION</span>
 
-                            <span
-                                th:if="${p.estado != null and p.estado == T(es.marta.tfg.carescan.model.Estado).INACTIVO}"
-                                class="statusBadge statusInactive" th:text="#{status.inactive}">INACTIVO</span>
-                        </td>
+                                <span
+                                    th:if="${p.estado != null and p.estado.name() == 'ACTIVO'}"
+                                    class="statusBadge statusActive" th:text="#{status.active}">ACTIVO</span>
 
-                        <td
-                            th:text="${patientDoctorMap[p.id] != null ? patientDoctorMap[p.id] : #messages.msg('patient.management.unassigned')}">
-                            Sin asignar
-                        </td>
+                                <span
+                                    th:if="${p.estado != null and p.estado.name() == 'INACTIVO'}"
+                                    class="statusBadge statusInactive" th:text="#{status.inactive}">INACTIVO</span>
+                            </td>
 
-                        <td>
-                            <div class="actionButtons">
+                            <td
+                                th:text="${patientDoctorMap[p.id] != null ? patientDoctorMap[p.id] : #messages.msg('patient.management.unassigned')}">
+                                Sin asignar
+                            </td>
 
-                                <!-- CAMBIAR MÉDICO: activo -> link real; inactivo -> botón gris sin link -->
-                                <a th:if="${p.estado != null and p.estado != T(es.marta.tfg.carescan.model.Estado).INACTIVO}"
-                                    th:href="@{/admin-hospital/patients/{id}/changeDoctor(id=${p.id})}">
-                                    <button type="button" class="btnAction btnGreen">
-                                        <span th:text="#{patient.management.change.doctor}">Cambiar medico</span>
-                                    </button>
-                                </a>
+                            <td>
+                                <details class="tableActionMenu">
+                                    <summary class="tableActionToggle" th:text="#{common.actions}">Acciones</summary>
 
-                                <button
-                                    th:if="${p.estado != null and p.estado == T(es.marta.tfg.carescan.model.Estado).INACTIVO}"
-                                    type="button" class="btnAction btnGreen btnDisabled" disabled>
-                                    <span th:text="#{patient.management.change.doctor}">Cambiar medico</span>
-                                </button>
+                                    <div class="tableActionDropdown"
+                                        th:if="${p.estado == null or p.estado.name() != 'INACTIVO'}">
+                                        <a th:href="@{/admin-hospital/patients/{id}/changeDoctor(id=${p.id})}"
+                                            class="tableActionLink">
+                                            <span th:text="#{patient.management.change.doctor}">Cambiar medico</span>
+                                        </a>
 
-                                <!-- DAR DE BAJA: activo -> form submit; inactivo -> botón gris sin submit -->
-                                <form
-                                    th:if="${p.estado != null and p.estado != T(es.marta.tfg.carescan.model.Estado).INACTIVO}"
-                                    th:action="@{/admin-hospital/patients/{id}/deactivate(id=${p.id})}" method="post"
-                                    style="margin:0;">
-                                    <button type="submit" class="btnAction btnRed">
+                                        <form th:action="@{/admin-hospital/patients/{id}/deactivate(id=${p.id})}" method="post"
+                                            class="tableActionForm js-confirm-form"
+                                            th:attr="data-confirm-message=#{patient.management.deactivate.confirm}">
+                                            <button type="submit" class="tableActionItem tableActionItemDanger">
+                                                <span th:text="#{patient.management.deactivate}">Dar de baja</span>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <div class="tableActionDropdown"
+                                        th:if="${p.estado != null and p.estado.name() == 'INACTIVO'}">
+                                        <a th:href="@{/admin-hospital/patients/{id}/reactivate(id=${p.id})}"
+                                            class="tableActionLink">
+                                            <span th:text="#{patient.management.reactivate}">Reactivar usuario</span>
+                                        </a>
+                                    </div>
+                                </details>
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="doctorsPanel" class="managementPanel">
+                <table class="tableFullWidth">
+                    <thead>
+                        <tr>
+                            <th th:text="#{common.doctor}">Medico</th>
+                            <th th:text="#{common.email}">Email</th>
+                            <th th:text="#{common.status}">Estado</th>
+                            <th th:text="#{common.actions}">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="d : ${doctors}">
+                            <td th:text="${d.name}">Nombre</td>
+                            <td th:text="${d.email}">Email</td>
+                            <td>
+                                <span th:if="${d.active}" class="statusBadge statusActive"
+                                    th:text="#{status.active}">ACTIVO</span>
+                                <span th:if="${!d.active}" class="statusBadge statusInactive"
+                                    th:text="#{status.inactive}">INACTIVO</span>
+                            </td>
+                            <td>
+                                <form th:if="${d.active}" th:action="@{/admin-hospital/doctors/{id}/deactivate(id=${d.id})}"
+                                    method="post" class="js-confirm-form"
+                                    th:attr="data-confirm-message=#{doctor.management.deactivate.confirm}">
+                                    <button type="submit" class="btn btn-danger btn-sm">
                                         <span th:text="#{patient.management.deactivate}">Dar de baja</span>
                                     </button>
                                 </form>
-
-                                <button
-                                    th:if="${p.estado != null and p.estado == T(es.marta.tfg.carescan.model.Estado).INACTIVO}"
-                                    type="button" class="btnAction btnRed btnDisabled" disabled>
-                                    <span th:text="#{patient.management.deactivate}">Dar de baja</span>
-                                </button>
-
-
-                            </div>
-                        </td>
-
-                    </tr>
-                </tbody>
-            </table>
+                                <form th:if="${!d.active}" th:action="@{/admin-hospital/doctors/{id}/reactivate(id=${d.id})}"
+                                    method="post" class="js-confirm-form"
+                                    th:attr="data-confirm-message=#{doctor.management.reactivate.confirm}">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <span th:text="#{doctor.management.reactivate}">Reactivar medico</span>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
 
             <br>
-            <a th:href="@{'/' + ${userId} + '/home'}"><button type="button" th:text="#{common.back}">Volver</button></a>
+            <a th:href="@{'/' + ${userId} + '/home'}" class="btnSecondary doctorClassicLinkButton" th:text="#{common.back}">Volver</a>
 
         </div>
     </main>
 
+    <div id="actionConfirmModal" class="modal-overlay">
+        <div class="modal modal-confirm">
+            <div class="modal-header">
+                <div class="modal-confirm-heading">
+                    <span class="modal-confirm-kicker" th:text="#{patient.management.confirm.title}">Confirmar accion</span>
+                    <h3 id="actionConfirmTitle" th:text="#{patient.management.deactivate}">Dar de baja</h3>
+                </div>
+                <button type="button" class="btn-close" onclick="closeActionConfirmModal()" th:aria-label="#{common.close}">
+                    ×
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="actionConfirmMessage" class="modal-confirm-text" th:text="#{patient.management.deactivate.confirm}">
+                    Estas seguro de realizar esta accion?
+                </p>
+                <div class="modal-buttons modal-buttons-end">
+                    <button type="button" id="actionConfirmAccept" class="btn-confirm" th:text="#{common.accept}">Aceptar</button>
+                    <button type="button" class="btn-cancel" onclick="closeActionConfirmModal()" th:text="#{common.cancel}">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div th:replace="fragments/footer :: footer"></div>
+
+    <script>
+        let pendingActionForm = null;
+
+        function closeActionConfirmModal() {
+            document.getElementById("actionConfirmModal").classList.remove("active");
+            pendingActionForm = null;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const modal = document.getElementById("actionConfirmModal");
+            const message = document.getElementById("actionConfirmMessage");
+            const title = document.getElementById("actionConfirmTitle");
+            const acceptButton = document.getElementById("actionConfirmAccept");
+            const confirmForms = document.querySelectorAll(".js-confirm-form");
+            const tabs = document.querySelectorAll(".managementTab");
+            const panels = document.querySelectorAll(".managementPanel");
+
+            function activatePanel(targetId) {
+                tabs.forEach(tab => tab.classList.toggle("active", tab.dataset.target === targetId));
+                panels.forEach(panel => panel.classList.toggle("active", panel.id === targetId));
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener("click", function () {
+                    activatePanel(tab.dataset.target);
+                    const tabName = tab.dataset.target === "doctorsPanel" ? "doctors" : "patients";
+                    history.replaceState(null, "", "?tab=" + tabName);
+                });
+            });
+
+            if (new URLSearchParams(window.location.search).get("tab") === "doctors") {
+                activatePanel("doctorsPanel");
+            }
+
+            confirmForms.forEach(form => {
+                form.addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    pendingActionForm = form;
+                    message.textContent = form.dataset.confirmMessage;
+                    title.textContent = form.querySelector("button span")?.textContent || "Confirmar";
+                    modal.classList.add("active");
+                });
+            });
+
+            acceptButton.addEventListener("click", function () {
+                if (pendingActionForm) {
+                    pendingActionForm.submit();
+                }
+            });
+
+            modal.addEventListener("click", function (event) {
+                if (event.target === modal) {
+                    closeActionConfirmModal();
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

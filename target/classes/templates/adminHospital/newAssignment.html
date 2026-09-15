@@ -13,7 +13,7 @@
     <div th:replace="fragments/header :: header"></div>
 
     <main class="pageWrapper">
-        <section class="card">
+        <section class="card card-surface">
 
             <div class="cardHeader">
                 <div>
@@ -56,9 +56,7 @@
                 <div class="cardActions">
                     <button type="submit" class="btnPrimary" th:text="#{new.assignment.submit}">Asignar</button>
 
-                    <a th:href="@{'/' + ${userId} + '/home'}" style="text-decoration:none;">
-                        <button type="button" class="btnSecondary" th:text="#{common.back}">Volver</button>
-                    </a>
+                    <a th:href="@{'/' + ${userId} + '/home'}" class="btnSecondary doctorClassicLinkButton" th:text="#{common.back}">Volver</a>
                 </div>
 
             </form>

@@ -27,10 +27,6 @@
                         </form>
                     </div>
 
-                    <div sec:authorize="isAnonymous()">
-                        <a th:href="@{/about}" th:text="#{nav.about}">Saber mas</a>
-                    </div>
-
                     <div class="user-menu" sec:authorize="isAuthenticated()">
                         <button type="button" class="user-menu-toggle">
                             <span class="user-avatar" th:text="${#strings.substring(username,0,1)}">U</span>
@@ -43,13 +39,14 @@
                             <div sec:authorize="hasRole('ADMIN_IT')">
                                 <a th:href="@{/admin/dashboard}" th:text="#{nav.admin.it}">Panel de administracion IT</a>
                                 <a th:href="@{/admin/users}" th:text="#{nav.users}">Gestion de usuarios</a>
+                                <a th:href="@{/admin/logs}" th:text="#{nav.audit.logs}">Logs de auditoria</a>
                             </div>
 
                             <div sec:authorize="hasRole('ADMIN_HOSPITAL')">
                                 <a th:href="@{/admin-hospital/patients}" th:text="#{nav.patients.manage}">Gestionar
                                     pacientes</a>
-                                <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.patient.create}">Crear
-                                    paciente</a>
+                                <a th:href="@{/admin-hospital/patients/new}" th:text="#{nav.user.create}">Crear
+                                    usuario</a>
                                 <a th:href="@{/admin-hospital/assignments/new}" th:text="#{nav.assignments.create}">Asignar
                                     medico/paciente</a>
                             </div>
@@ -70,12 +67,22 @@
         </header>
 
         <div id="logoutModal" class="modal-overlay">
-            <div class="modal">
-                <p>
-                    <span th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</span><br>
-                    <span th:text="#{logout.modal.question.line2}">Tendras que volver a iniciar sesion para continuar.</span>
-                </p>
-                <div class="modal-buttons">
+            <div class="modal modal-confirm">
+                <div class="modal-header">
+                    <div class="modal-confirm-heading">
+                        <span class="modal-confirm-kicker" th:text="#{nav.logout}">Cerrar sesion</span>
+                        <h3 th:text="#{logout.modal.question.line1}">Seguro que deseas cerrar sesion?</h3>
+                    </div>
+                    <button type="button" class="btn-close" onclick="closeLogoutModal()" th:aria-label="#{common.close}">
+                        ×
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-confirm-text" th:text="#{logout.modal.question.line2}">
+                        Tendras que volver a iniciar sesion para continuar.
+                    </p>
+                </div>
+                <div class="modal-buttons modal-buttons-end">
                     <form th:action="@{/logout}" method="post" onclick="event.stopPropagation()">
                         <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit" class="btn-confirm" th:text="#{nav.logout}">Cerrar sesion</button>

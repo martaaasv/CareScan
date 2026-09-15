@@ -11,28 +11,89 @@
 <body>
     <div th:replace="fragments/header :: header"></div>
 
-    <main>
-        <div class="container">
-            <h2 th:text="#{upload.image.title}">Subir una imagen</h2>
+    <main class="pageWrapper">
+        <section class="card doctorClassicCard">
+            <div class="cardHeader">
+                <div>
+                    <h2 class="cardTitle" th:text="#{upload.image.title}">Subir una imagen</h2>
+                    <p class="cardSubtitle" th:text="#{upload.image.subtitle}">
+                        Selecciona una imagen desde tu dispositivo para realizar la demostracion.
+                    </p>
+                </div>
+            </div>
 
-            <p><b th:text="#{common.patient} + ':'">Paciente:</b> <span th:text="${patient.name}">—</span></p>
-            <p><b th:text="#{common.email} + ':'">Email:</b> <span th:text="${patient.email}">—</span></p>
-
-            <p th:text="#{upload.image.subtitle}">Selecciona una imagen desde tu dispositivo para realizar la
-                demostracion.</p>
+            <div class="doctorClassicInfo">
+                <p><b th:text="#{common.patient} + ':'">Paciente:</b> <span th:text="${patient.name}">—</span></p>
+                <p><b th:text="#{common.email} + ':'">Email:</b> <span th:text="${patient.email}">—</span></p>
+            </div>
 
             <form th:action="@{/medico/patients/{patientId}/upload(patientId=${patient.id})}" method="post"
-                enctype="multipart/form-data">
+                enctype="multipart/form-data" class="doctorClassicForm">
 
-                <input type="file" name="file" accept="image/*" required>
-                <br>
-                <button type="submit" th:text="#{upload.image.submit}">Subir</button>
+                <label for="radiographyFile" class="doctorClassicUpload" id="doctorClassicUpload">
+                    <input id="radiographyFile" type="file" name="file" accept="image/*" required class="uploadInput">
+                    <div class="doctorClassicUploadContent" id="doctorClassicUploadContent">
+                        <p class="doctorClassicUploadTitle" th:text="#{upload.image.empty}">Selecciona la radiografia</p>
+                        <p class="doctorClassicUploadHint" th:text="#{upload.image.hint}">Arrastra o sube la imagen.</p>
+                    </div>
+                    <div class="doctorClassicPreview" id="doctorClassicPreview" hidden>
+                        <img id="doctorClassicPreviewImage" src="" alt="">
+                    </div>
+                </label>
+
+                <div class="cardActions">
+                    <button type="submit" class="btnPrimary" th:text="#{upload.image.submit}">Subir</button>
+                    <a th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias'}" class="btnSecondary doctorClassicLinkButton"
+                        th:text="#{medico.back.radiographies}">Volver a radiografias</a>
+                </div>
             </form>
-
-        </div>
+        </section>
     </main>
 
-    <div th:replace="fragments/footer :: footer"></div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const fileInput = document.getElementById("radiographyFile");
+            const preview = document.getElementById("doctorClassicPreview");
+            const previewImage = document.getElementById("doctorClassicPreviewImage");
+            const uploadBox = document.getElementById("doctorClassicUpload");
+            const uploadContent = document.getElementById("doctorClassicUploadContent");
+
+            fileInput.addEventListener("change", function () {
+                const file = fileInput.files && fileInput.files[0];
+                if (!file) {
+                    preview.hidden = true;
+                    previewImage.src = "";
+                    uploadBox.classList.remove("hasPreview");
+                    uploadContent.hidden = false;
+                    return;
+                }
+
+                preview.hidden = false;
+                uploadBox.classList.add("hasPreview");
+                uploadContent.hidden = true;
+
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    previewImage.src = event.target?.result || "";
+                };
+                reader.readAsDataURL(file);
+            });
+
+            ["dragenter", "dragover"].forEach(eventName => {
+                uploadBox.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    uploadBox.classList.add("isDragOver");
+                });
+            });
+
+            ["dragleave", "drop"].forEach(eventName => {
+                uploadBox.addEventListener(eventName, function (event) {
+                    event.preventDefault();
+                    uploadBox.classList.remove("isDragOver");
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

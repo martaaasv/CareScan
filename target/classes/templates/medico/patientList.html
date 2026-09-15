@@ -53,9 +53,9 @@
 
                         <!-- Estado -->
                         <td>
-                            <span th:if="${p.active}" class="badge statusActive"
+                            <span th:if="${p.estado == null or p.estado.name() != 'INACTIVO'}" class="badge statusActive"
                                 th:text="#{status.active}">Activo</span>
-                            <span th:if="${!p.active}" class="badge statusInactive"
+                            <span th:if="${p.estado != null and p.estado.name() == 'INACTIVO'}" class="badge statusInactive"
                                 th:text="#{status.inactive}">Inactivo</span>
                         </td>
 
@@ -69,7 +69,7 @@
 
                         <!-- Subir radiografía -->
                         <td>
-                            <a th:if="${p.active}" class="btn btn-primary btn-sm"
+                            <a th:if="${p.estado == null or p.estado.name() != 'INACTIVO'}" class="btn btn-primary btn-sm"
                                 th:href="@{/medico/patients/{id}/upload(id=${p.id})}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -79,7 +79,7 @@
                                 <span th:text="#{medico.upload.radiography}">Subir radiografia</span>
                             </a>
 
-                            <span th:if="${!p.active}"
+                            <span th:if="${p.estado != null and p.estado.name() == 'INACTIVO'}"
                                 style="font-size:.8rem;color:var(--gray-400,#9ca3af);font-style:italic;">
                                 <span th:text="#{common.not.available}">No disponible</span>
                             </span>

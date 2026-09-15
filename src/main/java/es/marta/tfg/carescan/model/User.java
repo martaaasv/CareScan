@@ -1,5 +1,6 @@
 package es.marta.tfg.carescan.model;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,6 +51,11 @@ public class User {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    private LocalDateTime blockedUntil;
+
+    @Column(nullable = false)
+    private boolean blockedManually = false;
 
     @ManyToMany(mappedBy = "patients") // Médicos de un paciente
     private Set<User> doctors = new HashSet<>();
@@ -143,12 +149,32 @@ public class User {
         this.active = active;
     }
 
+    public LocalDateTime getBlockedUntil() {
+        return blockedUntil;
+    }
+
+    public void setBlockedUntil(LocalDateTime blockedUntil) {
+        this.blockedUntil = blockedUntil;
+    }
+
+    public boolean isBlockedManually() {
+        return blockedManually;
+    }
+
+    public void setBlockedManually(boolean blockedManually) {
+        this.blockedManually = blockedManually;
+    }
+
     public Estado getEstado() {
         return estado;
     }
 
     public void setEstado(Estado estado) {
         this.estado = estado;
+    }
+
+    public boolean isBlocked() {
+        return blockedManually || (blockedUntil != null && blockedUntil.isAfter(LocalDateTime.now()));
     }
 
 }

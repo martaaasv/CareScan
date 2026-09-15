@@ -3,52 +3,138 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title th:text="#{title.radiography.detail}">Detalle radiografia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{title.radiography.detail}"></title>
     <link rel="stylesheet" th:href="@{/css/styles.css}" />
 </head>
 
 <body>
     <div th:replace="fragments/header :: header"></div>
-    <main class="container">
-        <h2 th:text="#{radiography.detail.title(${patient.name})}">Detalle</h2>
+    <main class="pageWrapper">
+        <section class="card doctorClassicCard doctorClassicDetailCard">
+            <div class="cardHeader">
+                <div>
+                    <h2 class="cardTitle" th:text="#{radiography.detail.title(${patient.name})}"></h2>
+                    <p class="cardSubtitle" th:text="#{radiography.detail.subtitle}">Consulta la radiografia y el analisis antes de publicar el resultado.</p>
+                </div>
+            </div>
 
-        <p>
-            <strong th:text="#{common.date} + ':'">Fecha:</strong>
-            <span th:text="${#temporals.format(consulta.fechaHora, 'dd/MM/yyyy HH:mm')}">—</span>
-        </p>
+            <div class="doctorClassicInfo doctorClassicInfoCompact">
+                <p>
+                    <b th:text="#{common.date} + ':'">Fecha:</b>
+                    <span th:text="${#temporals.format(consulta.fechaHora, 'dd/MM/yyyy HH:mm')}">—</span>
+                </p>
 
-        <p th:if="${analisis != null}">
-            <strong th:text="#{common.result} + ':'">Resultado:</strong> <span
-                th:text="${analisis.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${analisis.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${analisis.etiqueta})">—</span>
-            &nbsp; | &nbsp;
-            <strong th:text="#{common.probability} + ':'">Probabilidad:</strong> <span
-                th:text="${analisis.probabilidad}">—</span>
-        </p>
+                <p th:if="${analisis != null}">
+                    <b th:text="#{common.result} + ':'">Resultado:</b>
+                    <span
+                        th:text="${@analysisView.displayLabel(analisis.etiqueta)}">—</span>
+                    <span class="doctorClassicSeparator">|</span>
+                    <b th:text="#{common.probability} + ':'">Probabilidad:</b>
+                    <span th:text="${@analysisView.formatProbability(analisis.probabilidad)}">—</span>
+                </p>
+            </div>
 
-        <div style="margin:16px 0;">
-            <img th:src="@{'/medico/consultas/' + ${consulta.id} + '/image'}" th:alt="#{common.radiography}"
-                style="max-width:100%; height:auto; border-radius:8px;" />
-        </div>
+            <div class="doctorClassicImageWrap">
+                <img th:src="@{'/medico/consultas/' + ${consulta.id} + '/image'}" th:alt="#{common.radiography}">
+            </div>
 
-        <div th:if="${analisis != null}" style="margin:16px 0;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
-            <form th:if="${!analisis.visiblePaciente}" th:action="@{/medico/consultas/{id}/publish(id=${consulta.id})}"
-                method="post" style="margin:0;">
-                <input type="hidden" name="redirectTo"
-                    th:value="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${consulta.id}}" />
-                <button type="submit" class="btn btn-primary" th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
-            </form>
-            <p th:if="${analisis.visiblePaciente}" style="margin:0;color:var(--green-700);font-weight:600;"
-                th:text="#{results.published.patient}">Resultado publicado al paciente</p>
-        </div>
+            <div th:if="${analisis != null and analisis.heatmapImagen != null}" class="doctorClassicImageWrap">
+                <h3 class="cardTitle" th:text="#{analysis.heatmap.title}">Mapa de calor</h3>
+                <p class="cardSubtitle" th:text="#{analysis.heatmap.subtitle}">
+                    Visualizacion Grad-CAM de las regiones mas influyentes para la prediccion.
+                </p>
+                <img th:src="@{'/medico/consultas/' + ${consulta.id} + '/heatmap'}" th:alt="#{analysis.heatmap.title}">
+            </div>
 
-        <div style="margin-top:16px;">
-            <a class="btn" th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias'}">
-                <span th:text="#{medico.back.radiographies}">Volver a radiografias</span>
-            </a>
-        </div>
+            <div th:if="${!canInteractWithPatient}" class="alert alertInfo">
+                <span th:text="#{medico.inactive.read.only}">El paciente esta inactivo. Solo puedes consultar su historial.</span>
+            </div>
+
+            <div th:if="${analisis != null}" class="doctorClassicPublishBlock">
+                <form th:if="${canInteractWithPatient and !analisis.visiblePaciente}" th:action="@{/medico/consultas/{id}/publish(id=${consulta.id})}"
+                    method="post" class="doctorClassicForm">
+                    <div class="formRow">
+                        <label for="comentarioMedicoDetail" th:text="#{results.medical.comment}">Comentario medico</label>
+                        <textarea id="comentarioMedicoDetail" name="comentarioMedico" rows="5"
+                            th:placeholder="#{results.medical.comment.placeholder}"
+                            th:text="${analisis.comentarioMedico}"></textarea>
+                    </div>
+                    <input type="hidden" name="redirectTo"
+                        th:value="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${consulta.id}}" />
+                    <div class="cardActions">
+                        <button type="submit" class="btnPrimary" th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
+                        <a th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${consulta.id} + '/edit'}"
+                            class="btnSecondary doctorClassicLinkButton" th:text="#{medico.edit.consultation}">Editar consulta</a>
+                        <a th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias'}" class="btnSecondary doctorClassicLinkButton"
+                            th:text="#{medico.back.radiographies}">Volver a radiografias</a>
+                    </div>
+                </form>
+
+                <div th:if="${analisis.visiblePaciente}" class="doctorClassicPublishedBox">
+                    <p class="doctorClassicPublishedText" th:text="#{results.published.patient}">Resultado publicado al paciente</p>
+                    <p th:if="${!#strings.isEmpty(analisis.comentarioMedico)}" class="doctorClassicPublishedComment">
+                        <b th:text="#{results.medical.comment} + ':'">Comentario medico:</b>
+                        <span th:text="${analisis.comentarioMedico}">—</span>
+                    </p>
+                    <div class="cardActions">
+                        <button th:if="${canInteractWithPatient}" type="button"
+                            class="btnSecondary doctorClassicLinkButton"
+                            th:attr="data-edit-url=@{'/medico/patients/' + ${patient.id} + '/radiografias/' + ${consulta.id} + '/edit'}"
+                            onclick="openEditConfirmModal(this)"
+                            th:text="#{medico.edit.consultation}">Editar consulta</button>
+                        <a th:href="@{'/medico/patients/' + ${patient.id} + '/radiografias'}" class="btnSecondary doctorClassicLinkButton"
+                            th:text="#{medico.back.radiographies}">Volver a radiografias</a>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <div th:replace="fragments/footer :: footer"></div>
+    <div id="editConfirmModal" class="modal-overlay">
+        <div class="modal modal-confirm">
+            <div class="modal-confirm-icon">
+                <span>!</span>
+            </div>
+            <div class="modal-confirm-content">
+                <span class="modal-confirm-kicker" th:text="#{medico.edit.consultation}">Editar consulta</span>
+                <h3 th:text="#{edit.consultation.published.warning.title}">Editar consulta publicada</h3>
+                <p th:text="#{edit.consultation.published.warning.text}">
+                    Si editas la consulta, el resultado dejara de estar visible para el paciente hasta que vuelvas a publicarlo.
+                </p>
+            </div>
+            <div class="modal-confirm-actions">
+                <button type="button" id="editConfirmAccept" class="btn-confirm" th:text="#{common.accept}">Aceptar</button>
+                <button type="button" class="btn-cancel" onclick="closeEditConfirmModal()" th:text="#{common.cancel}">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pendingEditUrl = null;
+
+        function openEditConfirmModal(btn) {
+            pendingEditUrl = btn.getAttribute("data-edit-url");
+            document.getElementById("editConfirmModal").style.display = "flex";
+        }
+
+        function closeEditConfirmModal() {
+            pendingEditUrl = null;
+            document.getElementById("editConfirmModal").style.display = "none";
+        }
+
+        document.getElementById("editConfirmAccept").addEventListener("click", function () {
+            if (pendingEditUrl) window.location.href = pendingEditUrl;
+        });
+
+        document.getElementById("editConfirmModal").addEventListener("click", function (e) {
+            if (e.target === this) closeEditConfirmModal();
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") closeEditConfirmModal();
+        });
+    </script>
 </body>
 
 </html>

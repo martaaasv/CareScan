@@ -2,16 +2,6 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Spring Boot-CareScan<CareScan>",
-            "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "mainClass": "es.marta.tfg.carescan.CareScan",
-            "projectName": "CareScan",
-            "args": "",
-            "envFile": "${workspaceFolder}/.env"
-        },
-        {
-            "type": "java",
             "name": "Spring Boot-CareScan<carescan>",
             "request": "launch",
             "cwd": "${workspaceFolder}",

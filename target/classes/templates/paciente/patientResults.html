@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
@@ -20,27 +20,117 @@
                 <p th:text="#{patient.results.empty}">No hay resultados publicados.</p>
             </div>
 
-            <table th:if="${!#lists.isEmpty(consultas)}" class="styled-table">
-                <thead>
-                    <tr>
-                        <th th:text="#{common.date}">Fecha</th>
-                        <th th:text="#{common.probability}">Probabilidad</th>
-                        <th th:text="#{common.label}">Etiqueta</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="c : ${consultas}">
-                        <td th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy HH:mm')}">25/02/2026 13:00</td>
-                        <td th:text="${c.analisisIA.probabilidad}"> %</td>
-                        <td
-                            th:text="${c.analisisIA.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${c.analisisIA.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${c.analisisIA.etiqueta})"></td>
-                    </tr>
-                </tbody>
-            </table>
+            <div th:if="${!#lists.isEmpty(consultas)}" class="table-wrapper patient-results-table-wrap">
+                <table class="styled-table patient-results-table">
+                    <thead>
+                        <tr>
+                            <th th:text="#{common.date}">Fecha</th>
+                            <th th:text="#{common.label}">Etiqueta</th>
+                            <th th:text="#{common.radiography}">Radiografia</th>
+                            <th th:text="#{analysis.heatmap.title}">Mapa de calor</th>
+                            <th th:text="#{patient.results.medical.comment}">Comentario medico</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c : ${consultas}">
+                            <td th:text="${#temporals.format(c.fechaHora, 'dd/MM/yyyy HH:mm')}">25/02/2026 13:00</td>
+                            <td th:text="${@analysisView.displayLabel(c.analisisIA.etiqueta)}">
+                                Resultado
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-primary"
+                                    th:attr="data-img=@{'/paciente/consultas/' + ${c.id} + '/image'}"
+                                    onclick="openPatientImageModal(this)">
+                                    <span th:text="#{patient.results.view.radiography}">Ver radiografia</span>
+                                </button>
+                            </td>
+                            <td>
+                                <button th:if="${c.analisisIA.heatmapImagen != null}" type="button" class="btn btn-outline"
+                                    th:attr="data-img=@{'/paciente/consultas/' + ${c.id} + '/heatmap'}"
+                                    onclick="openPatientHeatmapModal(this)">
+                                    <span th:text="#{patient.results.view.heatmap}">Ver mapa de calor</span>
+                                </button>
+                                <span th:if="${c.analisisIA.heatmapImagen == null}" th:text="#{common.not.available}">No disponible</span>
+                            </td>
+                            <td>
+                                <span th:if="${#strings.isEmpty(c.analisisIA.comentarioMedico)}"
+                                    th:text="#{patient.results.no.comment}">Sin comentarios del medico.</span>
+                                <span th:unless="${#strings.isEmpty(c.analisisIA.comentarioMedico)}"
+                                    th:text="${c.analisisIA.comentarioMedico}">Comentario medico</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-            <p><a th:href="@{/}" th:text="#{nav.home}">Inicio</a></p>
+            <div class="patient-results-actions">
+                <a th:href="@{/{id}/home(id=${userId})}" class="btn btn-outline" th:text="#{nav.home}">Inicio</a>
+            </div>
         </div>
     </main>
+
+    <div id="patientImageModal" class="modal-overlay">
+        <div class="modal modal-image">
+            <div class="modal-header">
+                <h3 th:text="#{common.radiography}">Radiografia</h3>
+                <button type="button" class="btn-close" onclick="closePatientImageModal()" th:aria-label="#{common.close}">
+                    X
+                </button>
+            </div>
+            <div class="modal-body modal-body-image">
+                <img id="patientImageModalContent" src="" th:alt="#{common.radiography}" />
+            </div>
+        </div>
+    </div>
+
+    <div id="patientHeatmapModal" class="modal-overlay">
+        <div class="modal modal-image">
+            <div class="modal-header">
+                <h3 th:text="#{analysis.heatmap.title}">Mapa de calor</h3>
+                <button type="button" class="btn-close" onclick="closePatientHeatmapModal()" th:aria-label="#{common.close}">
+                    X
+                </button>
+            </div>
+            <div class="modal-body modal-body-image">
+                <img id="patientHeatmapModalContent" src="" th:alt="#{analysis.heatmap.title}" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openPatientImageModal(button) {
+            document.getElementById("patientImageModalContent").src = button.getAttribute("data-img");
+            document.getElementById("patientImageModal").classList.add("active");
+        }
+
+        function closePatientImageModal() {
+            document.getElementById("patientImageModalContent").src = "";
+            document.getElementById("patientImageModal").classList.remove("active");
+        }
+
+        function openPatientHeatmapModal(button) {
+            document.getElementById("patientHeatmapModalContent").src = button.getAttribute("data-img");
+            document.getElementById("patientHeatmapModal").classList.add("active");
+        }
+
+        function closePatientHeatmapModal() {
+            document.getElementById("patientHeatmapModalContent").src = "";
+            document.getElementById("patientHeatmapModal").classList.remove("active");
+        }
+
+        document.getElementById("patientImageModal").addEventListener("click", function (event) {
+            if (event.target === this) {
+                closePatientImageModal();
+            }
+        });
+
+        document.getElementById("patientHeatmapModal").addEventListener("click", function (event) {
+            if (event.target === this) {
+                closePatientHeatmapModal();
+            }
+        });
+    </script>
+
     <div th:replace="fragments/footer :: footer"></div>
 </body>
 

@@ -21,16 +21,28 @@
                 <p><b th:text="#{common.email} + ':'">Email:</b> <span th:text="${patient.email}">—</span></p>
 
                 <div th:if="${consulta.analisisIA != null}">
-                    <p><b th:text="#{common.probability} + ':'">Probabilidad:</b> <span th:text="${consulta.analisisIA.probabilidad}">—</span></p>
+                    <p><b th:text="#{common.probability} + ':'">Probabilidad:</b> <span th:text="${@analysisView.formatProbability(consulta.analisisIA.probabilidad)}">—</span></p>
                     <p><b th:text="#{common.label} + ':'">Etiqueta:</b> <span
-                            th:text="${consulta.analisisIA.etiqueta == 'POSITIVO'} ? #{analysis.label.positive} : (${consulta.analisisIA.etiqueta == 'NEGATIVO'} ? #{analysis.label.negative} : ${consulta.analisisIA.etiqueta})">—</span></p>
+                            th:text="${@analysisView.displayLabel(consulta.analisisIA.etiqueta)}">—</span></p>
                     <p><b th:text="#{common.model} + ':'">Modelo:</b> <span th:text="${consulta.analisisIA.modeloVersion}">—</span></p>
+                </div>
+
+                <div th:if="${consulta.analisisIA != null and consulta.analisisIA.heatmapImagen != null}">
+                    <p><b th:text="#{analysis.heatmap.title} + ':'">Mapa de calor:</b></p>
+                    <img th:src="@{'/medico/consultas/' + ${consulta.id} + '/heatmap'}"
+                        th:alt="#{analysis.heatmap.title}"
+                        style="max-width:100%;height:auto;border-radius:8px;">
                 </div>
 
                 <div th:if="${consulta.analisisIA != null}">
 
                     <div th:if="${!consulta.analisisIA.visiblePaciente}">
                         <form th:action="@{/medico/consultas/{id}/publish(id=${consulta.id})}" method="post">
+                            <div class="formRow">
+                                <label for="comentarioMedicoCase" th:text="#{results.medical.comment}">Comentario medico</label>
+                                <textarea id="comentarioMedicoCase" name="comentarioMedico" rows="4"
+                                    th:placeholder="#{results.medical.comment.placeholder}"></textarea>
+                            </div>
                             <input type="hidden" name="redirectTo"
                                 th:value="@{'/medico/consultas/' + ${consulta.id} + '/results'}" />
                             <button type="submit" th:text="#{results.publish.patient}">Publicar resultado al paciente</button>
@@ -39,6 +51,10 @@
 
                     <div th:if="${consulta.analisisIA.visiblePaciente}">
                         <p style="color:green;"><b th:text="#{results.published.patient}">Resultado publicado al paciente</b></p>
+                        <p th:if="${!#strings.isEmpty(consulta.analisisIA.comentarioMedico)}">
+                            <b th:text="#{results.medical.comment} + ':'">Comentario medico:</b>
+                            <span th:text="${consulta.analisisIA.comentarioMedico}">—</span>
+                        </p>
                     </div>
 
                 </div>

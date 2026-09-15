@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="#{title.new.patient}">Alta de paciente</title>
+    <title th:text="#{title.new.user}">Alta de usuario</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 
@@ -12,19 +12,17 @@
 
     <div th:replace="fragments/header :: header"></div>
 
-
     <main class="pageWrapper">
-        <section class="card">
+        <section class="card card-surface">
 
             <div class="cardHeader">
                 <div>
-                    <h2 class="cardTitle" th:text="#{new.patient.title}">Alta de paciente</h2>
-                    <p class="cardSubtitle" th:text="#{new.patient.subtitle}">Crea un paciente y genera una contrasena
+                    <h2 class="cardTitle" th:text="#{new.user.title}">Alta de usuario</h2>
+                    <p class="cardSubtitle" th:text="#{new.user.subtitle}">Crea un usuario y genera una contrasena
                         temporal para el primer acceso.</p>
                 </div>
             </div>
 
-            <!-- Error (se queda en página, no en modal) -->
             <div th:if="${error}" class="alert alertError">
                 <span th:text="${error}"></span>
             </div>
@@ -33,19 +31,27 @@
 
                 <div class="formRow">
                     <label for="name" th:text="#{common.name}">Nombre</label>
-                    <input id="name" type="text" name="name" required th:placeholder="#{new.patient.name.placeholder}">
+                    <input id="name" type="text" name="name" required th:placeholder="#{new.user.name.placeholder}">
                 </div>
 
                 <div class="formRow">
                     <label for="email" th:text="#{common.email}">Email</label>
                     <input id="email" type="email" name="email" required
-                        th:placeholder="#{new.patient.email.placeholder}">
+                        th:placeholder="#{new.user.email.placeholder}">
+                </div>
+
+                <div class="formRow">
+                    <label for="role" th:text="#{common.role}">Rol</label>
+                    <select id="role" name="role" required>
+                        <option value="" selected disabled th:text="#{new.user.select.role}">Selecciona un rol</option>
+                        <option th:value="${T(es.marta.tfg.carescan.model.Role).PACIENTE}" th:text="#{role.paciente}">Paciente</option>
+                        <option th:value="${T(es.marta.tfg.carescan.model.Role).MEDICO}" th:text="#{role.medico}">Medico</option>
+                    </select>
                 </div>
 
                 <div class="cardActions">
-                    <button type="submit" class="btn btn-primary" th:text="#{nav.patient.create}">Crear
-                        paciente</button>
-                    <a th:href="@{'/' + ${userId} + '/home'}" class="btn btn-secondary"
+                    <button type="submit" class="btn btn-primary" th:text="#{nav.user.create}">Crear usuario</button>
+                    <a th:href="@{'/' + ${userId} + '/home'}" class="btnSecondary doctorClassicLinkButton"
                         th:text="#{common.back}">Volver</a>
                 </div>
 
@@ -53,19 +59,11 @@
 
         </section>
     </main>
-
-
-    <footer>
-        <p>&copy; 2026 CareScan</p>
-    </footer>
-
-
-    <!-- ── MODAL: paciente creado ──────────────────────── -->
+    
     <div id="successModal" class="modal-overlay" th:if="${tempPassword}">
         <div class="modal" style="max-width:440px;">
 
             <div class="modal-header">
-                <!-- Icono check -->
                 <div style="display:flex;align-items:center;gap:10px;">
                     <div style="width:32px;height:32px;border-radius:50%;background:var(--green-100);
                                 display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -74,7 +72,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                         </svg>
                     </div>
-                    <h3 style="margin:0;font-size:1rem;font-weight:600;" th:text="#{new.patient.modal.created}">Paciente
+                    <h3 style="margin:0;font-size:1rem;font-weight:600;" th:text="#{new.user.modal.created}">Usuario
                         creado</h3>
                 </div>
                 <button class="btn-close" onclick="closeSuccessModal()">
@@ -88,11 +86,22 @@
             <div class="modal-body" style="padding:24px;">
 
                 <p style="margin-bottom:16px;color:var(--gray-500);font-size:.875rem;">
-                    <span th:text="#{new.patient.modal.share}">Comparte estas credenciales con el paciente. La
+                    <span th:text="#{new.user.modal.share}">Comparte estas credenciales con el usuario. La
                         contrasena solo se muestra una vez.</span>
                 </p>
 
-                <!-- Email -->
+                <div style="margin-bottom:12px;" th:if="${createdRole}">
+                    <div style="font-size:.75rem;font-weight:600;color:var(--gray-500);
+                                text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">
+                        <span th:text="#{common.role}">Rol</span>
+                    </div>
+                    <div style="background:var(--gray-100);border-radius:var(--radius-sm);
+                                padding:10px 14px;font-size:.9rem;color:var(--gray-900);"
+                        th:text="${createdRole == 'MEDICO'} ? #{role.medico} : #{role.paciente}">
+                        Medico
+                    </div>
+                </div>
+
                 <div style="margin-bottom:12px;">
                     <div style="font-size:.75rem;font-weight:600;color:var(--gray-500);
                                 text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">
@@ -100,11 +109,10 @@
                     </div>
                     <div style="background:var(--gray-100);border-radius:var(--radius-sm);
                                 padding:10px 14px;font-size:.9rem;color:var(--gray-900);" th:text="${createdEmail}">
-                        paciente@correo.com
+                        usuario@correo.com
                     </div>
                 </div>
 
-                <!-- Contraseña temporal -->
                 <div style="margin-bottom:20px;">
                     <div style="font-size:.75rem;font-weight:600;color:var(--gray-500);
                                 text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">
@@ -117,7 +125,6 @@
                             id="tempPasswordText">
                             abc123xyz
                         </div>
-                        <!-- Botón copiar -->
                         <button type="button" onclick="copyPassword()" id="copyBtn" style="flex-shrink:0;padding:10px 12px;border-radius:var(--radius-sm);
                                        border:1.5px solid var(--gray-200);background:var(--white);
                                        cursor:pointer;color:var(--gray-600);transition:all .15s;"
@@ -131,7 +138,6 @@
                     </div>
                 </div>
 
-                <!-- Aviso -->
                 <div style="display:flex;align-items:flex-start;gap:8px;background:var(--amber-100);
                             border-radius:var(--radius-sm);padding:10px 12px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24"
@@ -145,7 +151,6 @@
                     </span>
                 </div>
 
-                <!-- Botón cerrar -->
                 <div style="margin-top:20px;display:flex;justify-content:flex-end;">
                     <button type="button" class="btn btn-primary" onclick="closeSuccessModal()">
                         <span th:text="#{common.understood}">Entendido</span>
@@ -156,9 +161,7 @@
         </div>
     </div>
 
-
     <script>
-        // Abrir modal automáticamente si hay contraseña temporal
         window.addEventListener('DOMContentLoaded', function () {
             const modal = document.getElementById('successModal');
             if (modal) modal.style.display = 'flex';
@@ -193,7 +196,6 @@
             });
         }
 
-        // Cerrar con Escape
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeSuccessModal();
         });

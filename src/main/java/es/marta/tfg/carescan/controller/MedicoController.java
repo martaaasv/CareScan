@@ -2,6 +2,7 @@ package es.marta.tfg.carescan.controller;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ import es.marta.tfg.carescan.repository.AnalisisIARepository;
 import es.marta.tfg.carescan.repository.ConsultaRepository;
 import es.marta.tfg.carescan.repository.DoctorPatientAssignmentRepository;
 import es.marta.tfg.carescan.repository.UserRepository;
+import es.marta.tfg.carescan.service.BrainTumorAnalysisService;
+import es.marta.tfg.carescan.service.BrainTumorPrediction;
 
 @Controller
 @RequestMapping("/medico")
@@ -45,6 +48,9 @@ public class MedicoController {
     @Autowired
     private DoctorPatientAssignmentRepository assignmentRepository;
 
+    @Autowired
+    private BrainTumorAnalysisService brainTumorAnalysisService;
+
     @GetMapping("/patients")
     public String patientList(Model model, Authentication auth) {
 
@@ -58,14 +64,20 @@ public class MedicoController {
         }
 
         List<DoctorPatientAssignment> assignments = assignmentRepository.findByDoctorAndActiveTrue(doctor);
+        LinkedHashMap<Long, User> patientsById = new LinkedHashMap<>();
 
-        List<User> patients = assignments.stream()
+        assignments.stream()
                 .map(DoctorPatientAssignment::getPatient)
-                .toList();
+                .forEach(patient -> patientsById.put(patient.getId(), patient));
+
+        consultaRepository.findByUserOrderByFechaHoraDesc(doctor).stream()
+                .map(Consulta::getPatient)
+                .filter(patient -> patient != null && patient.getEstado() == Estado.INACTIVO)
+                .forEach(patient -> patientsById.putIfAbsent(patient.getId(), patient));
 
         model.addAttribute("userId", doctor.getId());
         model.addAttribute("username", doctor.getName());
-        model.addAttribute("patients", patients);
+        model.addAttribute("patients", List.copyOf(patientsById.values()));
 
         return "medico/patientList";
     }
@@ -88,11 +100,7 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
-        if (patient.getEstado() == Estado.INACTIVO) {
-            return "redirect:/access-denied";
-        }
-
-        if (!assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+        if (!canInteractWithPatient(doctor, patient)) {
             return "redirect:/access-denied";
         }
 
@@ -122,7 +130,7 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
-        if (!assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)) {
+        if (!canInteractWithPatient(doctor, patient)) {
             return "redirect:/access-denied";
         }
 
@@ -134,22 +142,12 @@ public class MedicoController {
         consulta.setUser(doctor);
         consulta.setPatient(patient);
         consulta.setFechaHora(LocalDateTime.now());
+        consulta.setNombreArchivo(file.getOriginalFilename());
         consulta.setContentType(file.getContentType());
         consulta.setImagen(file.getBytes());
         Consulta saved = consultaRepository.save(consulta);
 
-        double aux = Math.random();
-        double prob = Math.round(aux * 100.0) / 100.0;
-        String etiqueta = prob < 0.33 ? "NEGATIVO" : (prob < 0.66 ? "SOSPECHOSO" : "POSITIVO");
-
-        AnalisisIA analisis = new AnalisisIA();
-        analisis.setConsulta(saved);
-        analisis.setProbabilidad(prob);
-        analisis.setEtiqueta(etiqueta);
-        analisis.setModeloVersion("stub-v1");
-        analisis.setEjecutadoEn(LocalDateTime.now());
-
-        analisisIARepository.save(analisis);
+        analisisIARepository.save(createOrUpdateAnalysis(saved, saved.getAnalisisIA()));
 
         return "redirect:/medico/patients/" + patientId + "/radiografias/" + saved.getId();
 
@@ -176,6 +174,10 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
+        if (!canInteractWithPatient(doctor, consulta.getPatient())) {
+            return "redirect:/access-denied";
+        }
+
         model.addAttribute("userId", doctor.getId());
         model.addAttribute("username", doctor.getName());
         model.addAttribute("consulta", consulta);
@@ -186,6 +188,7 @@ public class MedicoController {
 
     @PostMapping("/consultas/{consultaId}/publish")
     public String publishResult(@PathVariable Long consultaId,
+            @RequestParam(value = "comentarioMedico", required = false) String comentarioMedico,
             @RequestParam(value = "redirectTo", required = false) String redirectTo,
             Authentication auth) {
 
@@ -207,8 +210,13 @@ public class MedicoController {
             return "redirect:/access-denied";
         }
 
+        if (!canInteractWithPatient(doctor, consulta.getPatient())) {
+            return "redirect:/access-denied";
+        }
+
         AnalisisIA analisis = consulta.getAnalisisIA();
         if (analisis != null) {
+            analisis.setComentarioMedico(comentarioMedico != null ? comentarioMedico.trim() : null);
             analisis.setVisiblePaciente(true);
             analisisIARepository.save(analisis);
         }
@@ -227,13 +235,24 @@ public class MedicoController {
         return userRepository.findByEmail(auth.getName()).orElse(null);
     }
 
-    private boolean hasAccess(User doctor, User patient) {
+    private boolean canInteractWithPatient(User doctor, User patient) {
         return doctor != null
                 && doctor.getRole() == Role.MEDICO
                 && patient != null
                 && patient.getRole() == Role.PACIENTE
+                && !patient.isBlocked()
                 && patient.getEstado() != Estado.INACTIVO
                 && assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient);
+    }
+
+    private boolean hasHistoryAccess(User doctor, User patient) {
+        return doctor != null
+                && doctor.getRole() == Role.MEDICO
+                && patient != null
+                && patient.getRole() == Role.PACIENTE
+                && (assignmentRepository.existsByDoctorAndPatientAndActiveTrue(doctor, patient)
+                        || ((patient.getEstado() == Estado.INACTIVO || patient.isBlocked())
+                                && consultaRepository.existsByUserAndPatient(doctor, patient)));
     }
 
     @GetMapping("/patients/{patientId}/radiografias")
@@ -244,7 +263,7 @@ public class MedicoController {
         }
 
         User patient = userRepository.findById(patientId).orElse(null);
-        if (!hasAccess(doctor, patient)) {
+        if (!hasHistoryAccess(doctor, patient)) {
             return "redirect:/access-denied";
         }
 
@@ -254,6 +273,7 @@ public class MedicoController {
         model.addAttribute("username", doctor.getName());
         model.addAttribute("patient", patient);
         model.addAttribute("consultas", consultas);
+        model.addAttribute("canInteractWithPatient", canInteractWithPatient(doctor, patient));
 
         return "medico/patientRadiographs";
     }
@@ -271,7 +291,7 @@ public class MedicoController {
         }
 
         User patient = userRepository.findById(patientId).orElse(null);
-        if (!hasAccess(doctor, patient)) {
+        if (!hasHistoryAccess(doctor, patient)) {
             return "redirect:/access-denied";
         }
 
@@ -284,9 +304,86 @@ public class MedicoController {
         model.addAttribute("username", doctor.getName());
         model.addAttribute("patient", patient);
         model.addAttribute("consulta", consulta);
-        model.addAttribute("analisis", consulta.getAnalisisIA()); // si lo tienes mapeado
+        model.addAttribute("analisis", consulta.getAnalisisIA());
+        model.addAttribute("canInteractWithPatient", canInteractWithPatient(doctor, patient));
 
         return "medico/radiographyDetail";
+    }
+
+    @GetMapping("/patients/{patientId}/radiografias/{consultaId}/edit")
+    public String editRadiographyForm(
+            @PathVariable Long patientId,
+            @PathVariable Long consultaId,
+            Model model,
+            Authentication auth) {
+
+        User doctor = requireDoctor(auth);
+        if (doctor == null) {
+            return "redirect:/login";
+        }
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (!canInteractWithPatient(doctor, patient)) {
+            return "redirect:/access-denied";
+        }
+
+        Consulta consulta = consultaRepository.findByIdAndUserAndPatient(consultaId, doctor, patient).orElse(null);
+        if (consulta == null) {
+            return "redirect:/access-denied";
+        }
+
+        unpublishForEdition(consulta);
+
+        model.addAttribute("userId", doctor.getId());
+        model.addAttribute("username", doctor.getName());
+        model.addAttribute("patient", patient);
+        model.addAttribute("consulta", consulta);
+        model.addAttribute("analisis", consulta.getAnalisisIA());
+
+        return "medico/editRadiography";
+    }
+
+    @PostMapping("/patients/{patientId}/radiografias/{consultaId}/edit")
+    public String editRadiography(
+            @PathVariable Long patientId,
+            @PathVariable Long consultaId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "comentarioMedico", required = false) String comentarioMedico,
+            Authentication auth) throws IOException {
+
+        User doctor = requireDoctor(auth);
+        if (doctor == null) {
+            return "redirect:/login";
+        }
+
+        User patient = userRepository.findById(patientId).orElse(null);
+        if (!canInteractWithPatient(doctor, patient)) {
+            return "redirect:/access-denied";
+        }
+
+        Consulta consulta = consultaRepository.findByIdAndUserAndPatient(consultaId, doctor, patient).orElse(null);
+        if (consulta == null) {
+            return "redirect:/access-denied";
+        }
+
+        Consulta saved = consulta;
+        AnalisisIA analisis = consulta.getAnalisisIA();
+
+        if (file != null && !file.isEmpty()) {
+            consulta.setNombreArchivo(file.getOriginalFilename());
+            consulta.setContentType(file.getContentType());
+            consulta.setImagen(file.getBytes());
+            saved = consultaRepository.save(consulta);
+            analisis = createOrUpdateAnalysis(saved, saved.getAnalisisIA());
+        } else if (analisis == null) {
+            analisis = createOrUpdateAnalysis(saved, null);
+        }
+
+        analisis.setComentarioMedico(normalizeComment(comentarioMedico));
+        analisis.setVisiblePaciente(false);
+        analisisIARepository.save(analisis);
+
+        return "redirect:/medico/patients/" + patientId + "/radiografias/" + consultaId;
     }
 
     @GetMapping("/consultas/{consultaId}/image")
@@ -303,7 +400,7 @@ public class MedicoController {
         }
 
         User patient = consulta.getPatient();
-        if (!hasAccess(doctor, patient)) {
+        if (!hasHistoryAccess(doctor, patient)) {
             return ResponseEntity.status(403).build();
         }
 
@@ -322,6 +419,72 @@ public class MedicoController {
         }
 
         return ResponseEntity.ok().contentType(mediaType).body(img);
+    }
+
+    @GetMapping("/consultas/{consultaId}/heatmap")
+    @ResponseBody
+    public ResponseEntity<byte[]> consultaHeatmap(@PathVariable Long consultaId, Authentication auth) {
+        User doctor = requireDoctor(auth);
+        if (doctor == null || doctor.getRole() != Role.MEDICO) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Consulta consulta = consultaRepository.findById(consultaId).orElse(null);
+        if (consulta == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User patient = consulta.getPatient();
+        if (!hasHistoryAccess(doctor, patient)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        AnalisisIA analisis = consulta.getAnalisisIA();
+        if (analisis == null || analisis.getHeatmapImagen() == null || analisis.getHeatmapImagen().length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        MediaType mediaType;
+        try {
+            mediaType = (analisis.getHeatmapContentType() != null)
+                    ? MediaType.parseMediaType(analisis.getHeatmapContentType())
+                    : MediaType.IMAGE_PNG;
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return ResponseEntity.ok().contentType(mediaType).body(analisis.getHeatmapImagen());
+    }
+
+    private AnalisisIA createOrUpdateAnalysis(Consulta consulta, AnalisisIA existingAnalysis) {
+        BrainTumorPrediction prediction = brainTumorAnalysisService.predict(consulta.getImagen());
+
+        AnalisisIA analisis = existingAnalysis != null ? existingAnalysis : new AnalisisIA();
+        analisis.setConsulta(consulta);
+        analisis.setProbabilidad(prediction.confidence());
+        analisis.setEtiqueta(prediction.label());
+        analisis.setModeloVersion(prediction.modelVersion());
+        analisis.setHeatmapImagen(prediction.heatmapImage());
+        analisis.setHeatmapContentType(prediction.heatmapContentType());
+        analisis.setEjecutadoEn(LocalDateTime.now());
+        analisis.setVisiblePaciente(false);
+
+        return analisis;
+    }
+
+    private void unpublishForEdition(Consulta consulta) {
+        AnalisisIA analisis = consulta.getAnalisisIA();
+        if (analisis != null && analisis.isVisiblePaciente()) {
+            analisis.setVisiblePaciente(false);
+            analisisIARepository.save(analisis);
+        }
+    }
+
+    private String normalizeComment(String comentarioMedico) {
+        if (comentarioMedico == null || comentarioMedico.trim().isEmpty()) {
+            return null;
+        }
+        return comentarioMedico.trim();
     }
 
 }

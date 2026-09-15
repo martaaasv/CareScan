@@ -1,6 +1,7 @@
 package es.marta.tfg.carescan.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -16,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import es.marta.tfg.carescan.service.AuditLogService;
 import es.marta.tfg.carescan.security.jwt.JwtRequestFilter;
 import es.marta.tfg.carescan.security.jwt.UnauthorizedHandlerJwt;
 import jakarta.servlet.http.HttpServletResponse;
@@ -52,10 +54,17 @@ public class SecurityConfiguration {
         return authProvider;
     }
 
+    @Bean
+    public FilterRegistrationBean<AuditLoggingFilter> auditLoggingFilterRegistration(AuditLoggingFilter filter) {
+        FilterRegistrationBean<AuditLoggingFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
     // API SEGURA (JWT)
     @Bean
     @Order(1)
-    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiFilterChain(HttpSecurity http, AuditLoggingFilter auditLoggingFilter) throws Exception {
         http
                 .securityMatcher("/api/**")
                 .exceptionHandling(handling -> handling
@@ -72,7 +81,8 @@ public class SecurityConfiguration {
                 .csrf(csrf -> csrf.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(auditLoggingFilter, JwtRequestFilter.class);
 
         return http.build();
     }
@@ -80,14 +90,18 @@ public class SecurityConfiguration {
     // FORMULARIOS WEB
     @Bean
     @Order(2)
-    public SecurityFilterChain webFilterChain(HttpSecurity http, CustomLogin successHandler) throws Exception {
+    public SecurityFilterChain webFilterChain(
+            HttpSecurity http,
+            CustomLogin successHandler,
+            AuditLoggingFilter auditLoggingFilter,
+            AuditLogService auditLogService) throws Exception {
 
         http.authenticationProvider(authenticationProvider());
 
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/login", "/error", "/css/**", "/js/**", "/images/**").permitAll()
+                .requestMatchers("/", "/login", "/error", "/access-denied", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN_IT")
                 .requestMatchers("/admin-hospital/**").hasRole("ADMIN_HOSPITAL")
                 .requestMatchers("/medico/**").hasRole("MEDICO")
@@ -103,17 +117,26 @@ public class SecurityConfiguration {
                 .usernameParameter("email")
                 .passwordParameter("password")
                 .successHandler(successHandler)
-                .failureUrl("/login?error=true")
+                .failureHandler((request, response, exception) -> {
+                    auditLogService.recordLoginFailure(request);
+                    response.sendRedirect("/login?error=true");
+                })
                 .permitAll()
                 )
                 .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    auditLogService.recordLogout(request, authentication);
+                    response.sendRedirect("/");
+                })
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .deleteCookies("JSESSIONID", "AuthToken", "RefreshToken")
                 .permitAll()
-                );
+                )
+                .exceptionHandling(handling -> handling
+                .accessDeniedPage("/access-denied"))
+                .addFilterAfter(auditLoggingFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -5,8 +5,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,8 +22,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import es.marta.tfg.carescan.model.Consulta;
 import es.marta.tfg.carescan.model.User;
+import es.marta.tfg.carescan.repository.AnalisisIARepository;
 import es.marta.tfg.carescan.repository.ConsultaRepository;
 import es.marta.tfg.carescan.repository.UserRepository;
+import es.marta.tfg.carescan.service.BrainTumorAnalysisService;
+import es.marta.tfg.carescan.service.BrainTumorPrediction;
 
 @Controller
 @RequestMapping("/upload")
@@ -36,6 +37,12 @@ public class AlgorController {
 
     @Autowired
     private ConsultaRepository consultaRepository;
+
+    @Autowired
+    private AnalisisIARepository analisisIARepository;
+
+    @Autowired
+    private BrainTumorAnalysisService brainTumorAnalysisService;
 
     @GetMapping("/{id}")
     public String showUserUpload(@PathVariable Long id, Model model) {
@@ -77,22 +84,25 @@ public class AlgorController {
         String originalName = file.getOriginalFilename();
         String safeName = (originalName == null) ? "archivo" : Paths.get(originalName).getFileName().toString();
 
-        int randomNumber = new Random().nextInt(100);
-
         Consulta imagen = new Consulta();
         imagen.setNombreArchivo(safeName);
-        imagen.setResultado(randomNumber);
         imagen.setUser(usuarioAutenticado);
         imagen.setImagen(file.getBytes());
         imagen.setContentType(file.getContentType());
         imagen.setFechaHora(LocalDateTime.now());
 
-        consultaRepository.save(imagen);
+        Consulta saved = consultaRepository.save(imagen);
+        BrainTumorPrediction prediction = brainTumorAnalysisService.predict(saved.getImagen());
+        saved.setResultado((int) Math.round(prediction.confidence() * 100));
+        consultaRepository.save(saved);
+
+        analisisIARepository.save(createAnalysis(saved, prediction));
 
         model.addAttribute("username", usuarioAutenticado.getName());
         model.addAttribute("userId", id);
         redirectAttributes.addFlashAttribute("fileName", safeName);
-        redirectAttributes.addFlashAttribute("randomNumber", randomNumber);
+        redirectAttributes.addFlashAttribute("predictionLabel", prediction.label());
+        redirectAttributes.addFlashAttribute("predictionConfidence", prediction.confidence());
         redirectAttributes.addFlashAttribute("userId", id);
 
         return "redirect:/upload/" + id + "/results";
@@ -212,5 +222,16 @@ public class AlgorController {
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .body(consulta.getImagen());
+    }
+
+    private es.marta.tfg.carescan.model.AnalisisIA createAnalysis(Consulta consulta, BrainTumorPrediction prediction) {
+        es.marta.tfg.carescan.model.AnalisisIA analisis = new es.marta.tfg.carescan.model.AnalisisIA();
+        analisis.setConsulta(consulta);
+        analisis.setEtiqueta(prediction.label());
+        analisis.setProbabilidad(prediction.confidence());
+        analisis.setModeloVersion(prediction.modelVersion());
+        analisis.setEjecutadoEn(LocalDateTime.now());
+        analisis.setVisiblePaciente(false);
+        return analisis;
     }
 }
